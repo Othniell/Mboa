@@ -1,57 +1,39 @@
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { FaSearch, FaFilter, FaStar, FaUtensils, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaStar, FaUtensils, FaMapMarkerAlt, FaHeart, FaRegHeart, FaBicycle } from 'react-icons/fa';
 import './Restaurants.css';
 
-const Restaurants = () => {
+const RestaurantsList = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [priceFilter, setPriceFilter] = useState('all');
   const [cuisineFilter, setCuisineFilter] = useState('all');
+  const [favorites, setFavorites] = useState([]);
 
-  // Sample restaurant data
+  // Restaurant data (same as before)
   const restaurants = [
     {
       id: 1,
       name: "La Pagode",
-      image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4",
+      mainImage: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4",
       cuisine: "Asian Fusion",
       rating: 4.7,
       price: "$$$",
       location: "Bonanjo",
-      delivery: true
+      delivery: true,
+      new: true,
+      reviews: 128,
+      features: ["Delivery", "Open Now", "Reservations", "Outdoor Seating"],
     },
-    {
-      id: 2,
-      name: "Le Wouri",
-      image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
-      cuisine: "French",
-      rating: 4.5,
-      price: "$$",
-      location: "Akwa",
-      delivery: false
-    },
-    // Add 6 more restaurants...
-        {
-      id: 3,
-      name: "La Pagode",
-      image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4",
-      cuisine: "Asian Fusion",
-      rating: 4.7,
-      price: "$$$",
-      location: "Bonanjo",
-      delivery: true
-    },
-    {
-      id: 4,
-      name: "Le Wouri",
-      image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5",
-      cuisine: "French",
-      rating: 4.5,
-      price: "$$",
-      location: "Akwa",
-      delivery: false
-    },
-
+    // ... other restaurants
   ];
+
+  const toggleFavorite = (id, e) => {
+    e.stopPropagation();
+    setFavorites(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
 
   const filteredRestaurants = restaurants.filter(restaurant => {
     const matchesSearch = restaurant.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -61,78 +43,133 @@ const Restaurants = () => {
     return matchesSearch && matchesPrice && matchesCuisine;
   });
 
+  const openRestaurantPage = (id) => {
+    navigate(`/restaurants/${id}`);
+  };
+
   return (
     <div className="restaurants-page">
-      {/* Header Section */}
-      <div className="restaurants-header">
-        <h1>Restaurants in Douala</h1>
-        <p>Discover the best dining experiences in the city</p>
+      {/* Hero Header */}
+      <div className="restaurant-hero">
+        <div className="hero-content">
+          <h1>Discover Douala's Finest Dining</h1>
+          <p>Explore {restaurants.length}+ exceptional restaurants curated just for you</p>
+          <div className="hero-search">
+            <FaSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder="Find restaurants by name, cuisine..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="search-filters">
-        <div className="search-bar">
-          <FaSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder="Search restaurants..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div className="filter-options">
-          <div className="filter-group">
+      {/* Filter Section */}
+      <div className="filter-section">
+        <div className="filter-group price-filter">
+          <label>
             <FaFilter className="filter-icon" />
-            <select value={priceFilter} onChange={(e) => setPriceFilter(e.target.value)}>
-              <option value="all">All Prices</option>
-              <option value="$">Budget ($)</option>
-              <option value="$$">Moderate ($$)</option>
-              <option value="$$$">Premium ($$$)</option>
-            </select>
-          </div>
+            Price
+          </label>
+          <select value={priceFilter} onChange={(e) => setPriceFilter(e.target.value)}>
+            <option value="all">All</option>
+            <option value="$">$ Budget</option>
+            <option value="$$">$$ Moderate</option>
+            <option value="$$$">$$$ Premium</option>
+          </select>
+        </div>
 
-          <div className="filter-group">
+        <div className="filter-group cuisine-filter">
+          <label>
             <FaUtensils className="filter-icon" />
-            <select value={cuisineFilter} onChange={(e) => setCuisineFilter(e.target.value)}>
-              <option value="all">All Cuisines</option>
-              <option value="Local">Local</option>
-              <option value="Asian Fusion">Asian</option>
-              <option value="French">French</option>
-              <option value="International">International</option>
-            </select>
-          </div>
+            Cuisine
+          </label>
+          <select value={cuisineFilter} onChange={(e) => setCuisineFilter(e.target.value)}>
+            <option value="all">All Types</option>
+            <option value="Local">Local</option>
+            <option value="Asian Fusion">Asian</option>
+            <option value="French">French</option>
+            <option value="International">International</option>
+          </select>
         </div>
       </div>
 
-      {/* Restaurant Grid */}
-      <div className="restaurants-grid">
+      {/* Results Count */}
+      <div className="results-count">
+        {filteredRestaurants.length} {filteredRestaurants.length === 1 ? 'restaurant' : 'restaurants'} found
+      </div>
+
+      {/* Restaurant List View */}
+      <div className="restaurants-list">
         {filteredRestaurants.length > 0 ? (
           filteredRestaurants.map(restaurant => (
-            <div key={restaurant.id} className="restaurant-card">
-              <div 
-                className="restaurant-image"
-                style={{ backgroundImage: `url(${restaurant.image})` }}
-              >
-                {restaurant.delivery && <span className="delivery-badge">Delivery Available</span>}
+            <div 
+              key={restaurant.id} 
+              className="restaurant-item"
+              onClick={() => openRestaurantPage(restaurant.id)}
+            >
+              <div className="image-carousel">
+                <img 
+                  src={restaurant.mainImage} 
+                  alt={restaurant.name}
+                  className="restaurant-image"
+                />
+                
+                <button 
+                  className={`favorite-btn ${favorites.includes(restaurant.id) ? 'active' : ''}`}
+                  onClick={(e) => toggleFavorite(restaurant.id, e)}
+                >
+                  {favorites.includes(restaurant.id) ? <FaHeart /> : <FaRegHeart />}
+                </button>
+                
+                {restaurant.new && <span className="new-badge">NEW</span>}
               </div>
+
               <div className="restaurant-info">
-                <h3>{restaurant.name}</h3>
-                <div className="restaurant-meta">
-                  <span className="rating"><FaStar /> {restaurant.rating}</span>
-                  <span className="price">{restaurant.price}</span>
+                <div className="info-header">
+                  <h3>{restaurant.name}</h3>
+                  <div className="rating-container">
+                    <div className="rating">
+                      <FaStar className="star-icon" />
+                      <span>{restaurant.rating}</span>
+                      <span className="review-count">({restaurant.reviews} reviews)</span>
+                    </div>
+                    <span className="price">{restaurant.price}</span>
+                  </div>
+                </div>
+
+                <div className="cuisine-location">
                   <span className="cuisine">{restaurant.cuisine}</span>
+                  <span className="location">
+                    <FaMapMarkerAlt /> {restaurant.location}
+                  </span>
                 </div>
-                <div className="restaurant-location">
-                  <FaMapMarkerAlt /> {restaurant.location}
+
+                <div className="features">
+                  {restaurant.features.map((feature, index) => (
+                    <span key={index} className="feature">
+                      {feature.includes("Delivery") && <FaBicycle />}
+                      {feature}
+                    </span>
+                  ))}
                 </div>
-                <button className="view-button">View Menu</button>
+
+                <div className="action-buttons">
+                  <button className="open-now-btn">
+                    {restaurant.features.includes("Open Now") ? "Open Now" : "Closed"}
+                  </button>
+                  <button className="menu-btn">View Menu</button>
+                </div>
               </div>
             </div>
           ))
         ) : (
           <div className="no-results">
-            <p>No restaurants match your filters. Try adjusting your search criteria.</p>
+            <img src="/images/no-results.svg" alt="No results found" />
+            <h3>No restaurants match your search</h3>
+            <p>Try adjusting your filters or search term</p>
           </div>
         )}
       </div>
@@ -140,4 +177,4 @@ const Restaurants = () => {
   );
 };
 
-export default Restaurants;
+export default RestaurantsList;

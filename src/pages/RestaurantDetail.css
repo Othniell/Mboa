@@ -1,0 +1,63 @@
+/* Review Form */
+.review-form-section .review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.review-form input,
+.review-form textarea,
+.review-form select {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.submit-review-btn {
+  background-color: #f04f24;
+  color: white;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Rating Summary */
+.summary-board {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.star-label {
+  width: 60px;
+}
+
+.bar-wrapper {
+  flex: 1;
+  background-color: #eee;
+  height: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  background-color: #f04f24;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.count {
+  min-width: 20px;
+}

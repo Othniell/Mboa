@@ -2,24 +2,23 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Navbar from './Components/Navbar';
 import Footer from './Components/Footer';
 import Home from './pages/Home';
-import Restaurants from './pages/Restaurants'  // We'll create this
+import RestaurantsList from './pages/Restaurants';
+import RestaurantDetail from './pages/RestaurantDetail';
 
 function App() {
   return (
-      <div>
-        
-           <Router>
+    <div>
+      <Router>
         <Navbar />
         <Routes>
-        
           <Route path="/" element={<Home />} />
-        
-          <Route path="/restaurants" element={<Restaurants />} />
-          {/*<Route path="/hotels" element={<Restaurants />} />*/}
+          <Route path="/restaurants" element={<RestaurantsList/>} />
+          <Route path="/restaurants/:id" element={<RestaurantDetail />} />
+
         </Routes>
         <Footer />
-        </Router>
-      </div>
+      </Router>
+    </div>
   );
 }
 
