@@ -1,0 +1,36 @@
+.trip-advert-section {
+  background-color: #f0f8ff;
+  border: 2px dashed #007bff;
+  border-radius: 16px;
+  padding: 30px;
+  margin: 40px 0;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.trip-advert-content h2 {
+  font-size: 1.8rem;
+  color: #007bff;
+  margin-bottom: 10px;
+}
+
+.trip-advert-content p {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.plan-trip-btn {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.plan-trip-btn:hover {
+  background-color: #0056b3;
+}

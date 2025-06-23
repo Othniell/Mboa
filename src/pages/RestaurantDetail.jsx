@@ -1,200 +1,267 @@
-import { useState } from 'react';
-import { FaStar, FaUserCircle, FaHeart, FaRegHeart } from 'react-icons/fa';
-import './RestaurantDetail.css';
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { FaStar, FaMapMarkerAlt } from "react-icons/fa";
+import RestaurantMapPage from "../Components/RestaurantMap";
+import TripAdvert from "../Components/TripAdverts";
+import "./RestaurantDetail.css";
 
 const RestaurantDetail = () => {
-  const [activeTab, setActiveTab] = useState('mains');
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { id } = useParams();
+  const [restaurant, setRestaurant] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [reviews, setReviews] = useState([]);
+  const { user, token } = useAuth();
+  const [form, setForm] = useState({
+    comment: "",
+    rating: 0,
+    hoveredStar: 0,
+    images: [],
+    imageFiles: [],
+  });
+  const [submitting, setSubmitting] = useState(false);
 
-  const [reviews, setReviews] = useState([
-    { user: 'Alex Johnson', rating: 5, date: '2 days ago', comment: 'The carbonara was divine! Service was impeccable.' },
-    { user: 'Sam Wilson', rating: 4, date: '1 week ago', comment: 'Great ambiance, but the tiramisu was a bit too sweet.' },
-  ]);
-
-  const [newReview, setNewReview] = useState({ user: '', rating: 5, comment: '' });
-
-  const handleReviewChange = (e) => {
-    const { name, value } = e.target;
-    setNewReview({ ...newReview, [name]: value });
-  };
-
-  const handleAddReview = (e) => {
-    e.preventDefault();
-    const today = new Date();
-    const formattedDate = today.toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
-    });
-
-    const newEntry = {
-      ...newReview,
-      date: formattedDate
+  useEffect(() => {
+    const fetchRestaurant = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/restaurants/${id}`);
+        const data = await res.json();
+        setRestaurant(data);
+      } catch (err) {
+        setError("Failed to load restaurant");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setReviews([newEntry, ...reviews]);
-    setNewReview({ user: '', rating: 5, comment: '' });
+    fetchRestaurant();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/reviews/restaurant/${id}`);
+        const data = await res.json();
+        console.log("Fetched Reviews:", data); // 👈 Add this
+        setReviews(data);
+        console.log("Reviews fetched:", data);
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+      }
+    };
+
+    fetchReviews();
+  }, [id]);
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === restaurant.images.length - 1 ? 0 : prev + 1
+    );
   };
 
-  const ratingSummary = [5, 4, 3, 2, 1].map(star => ({
-    star,
-    count: reviews.filter(r => r.rating === star).length
-  }));
-
-  const restaurant = {
-    name: "Gourmet Delight",
-    cuisine: "Italian • Fine Dining",
-    rating: 4.7,
-    description: "Award-winning Italian cuisine with a modern twist. Fresh ingredients sourced locally.",
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
+  const prevImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? restaurant.images.length - 1 : prev - 1
+    );
   };
 
-  const menuItems = {
-    starters: [
-      { name: 'Truffle Bruschetta', price: '$12', description: 'Toasted bread with truffle oil and tomatoes' },
-      { name: 'Calamari', price: '$14', description: 'Crispy squid with lemon aioli' },
-    ],
-    mains: [
-      { name: 'Pasta Carbonara', price: '$18', description: 'Classic spaghetti with creamy egg sauce and pancetta' },
-      { name: 'Risotto ai Funghi', price: '$22', description: 'Creamy mushroom risotto with parmesan' },
-    ],
-    desserts: [
-      { name: 'Tiramisu', price: '$10', description: 'Espresso-soaked ladyfingers with mascarpone' },
-      { name: 'Panna Cotta', price: '$9', description: 'Vanilla custard with berry coulis' },
-    ],
+  const handleStarClick = (value) => setForm({ ...form, rating: value });
+  const handleHover = (value) => setForm({ ...form, hoveredStar: value });
+  const handleHoverOut = () => setForm({ ...form, hoveredStar: 0 });
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    const validFiles = files.filter(file => file.type.startsWith("image/"));
+    const previews = validFiles.map(file => URL.createObjectURL(file));
+    setForm((prev) => ({
+      ...prev,
+      images: [...prev.images, ...previews],
+      imageFiles: [...prev.imageFiles, ...validFiles],
+    }));
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!user || !token) {
+      alert("You must be logged in to submit a review.");
+      return;
+    }
+
+    if (!form.comment.trim() || !form.rating) {
+      alert("Comment and rating required");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const formData = new FormData();
+      formData.append("comment", form.comment);
+      formData.append("rating", form.rating);
+      formData.append("restaurantId", id);
+      formData.append("user", user._id);
+
+      form.imageFiles.forEach((file) => {
+        formData.append("images", file);
+      });
+
+      const res = await fetch("http://localhost:5000/api/reviews", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Error ${res.status}: ${errorText}`);
+      }
+
+      const newReview = await res.json();
+      setReviews((prev) => [...prev, newReview]);
+
+      setForm({
+        comment: "",
+        rating: 0,
+        hoveredStar: 0,
+        images: [],
+        imageFiles: [],
+      });
+
+      alert("Review submitted successfully!");
+    } catch (err) {
+      console.error("Review submission error:", err);
+      alert("Failed to submit review. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const averageRating = reviews.length
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : null;
+
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>{error}</p>;
 
   return (
     <div className="restaurant-detail">
-      {/* Hero Section */}
-      <section className="hero" style={{ backgroundImage: `url(${restaurant.image})` }}>
-        <div className="hero-overlay">
-          <div className="hero-content">
-            <h1>{restaurant.name}</h1>
-            <div className="hero-subtitle">
-              <span>{restaurant.cuisine}</span>
-              <span className="rating">⭐ {restaurant.rating} (120+ reviews)</span>
-            </div>
-            <p>{restaurant.description}</p>
-            <button
-              className="favorite-btn"
-              onClick={() => setIsFavorite(!isFavorite)}
-            >
-              {isFavorite ? <FaHeart color="red" /> : <FaRegHeart />}
-              {isFavorite ? ' Saved' : ' Save to Favorites'}
-            </button>
+      <h1>{restaurant.name}</h1>
+
+      {/* ⭐ Average Rating Display */}
+      {averageRating ? (
+        <div className="average-rating-display">
+          <div className="stars-row">
+            {[1, 2, 3, 4, 5].map((s) => (
+              <FaStar
+                key={s}
+                color={s <= Math.round(averageRating) ? "#facc15" : "#ddd"}
+                size={20}
+              />
+            ))}
+            <span className="rating-number">
+              {averageRating} / 5 ({reviews.length} {reviews.length === 1 ? "review" : "reviews"})
+            </span>
           </div>
         </div>
-      </section>
+      ) : (
+        <p className="no-rating-text">No ratings yet</p>
+      )}
 
-      {/* Menu Section */}
-      <section className="menu-section">
-        <h2>Menu</h2>
-        <div className="menu-tabs">
-          {['starters', 'mains', 'desserts'].map((tab) => (
-            <button
-              key={tab}
-              className={activeTab === tab ? 'active' : ''}
-              onClick={() => setActiveTab(tab)}
+      {/* 🖼️ Image Grid */}
+      <div className="image-gallery">
+        <div className="main-image">
+          <img
+            src={restaurant.images?.[currentImageIndex] || "/placeholder.jpg"}
+            alt="Main"
+          />
+          <button className="nav-button prev" onClick={prevImage}>‹</button>
+          <button className="nav-button next" onClick={nextImage}>›</button>
+        </div>
+        <div className="thumbnail-grid">
+          {restaurant.images?.map((img, index) => (
+            <div
+              key={index}
+              className={`thumbnail-item ${index === currentImageIndex ? "active" : ""}`}
+              onClick={() => setCurrentImageIndex(index)}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
-        </div>
-        <div className="menu-items">
-          {menuItems[activeTab].map((item, index) => (
-            <div key={index} className="menu-item">
-              <div className="item-text">
-                <h3>{item.name}</h3>
-                <p className="item-description">{item.description}</p>
-              </div>
-              <span className="item-price">{item.price}</span>
+              <img src={img} alt={`Thumbnail ${index + 1}`} />
             </div>
           ))}
         </div>
-      </section>
+      </div>
 
-      {/* Review Summary Section */}
-      <section className="summary-section">
-        <h2>Rating Summary</h2>
-        <div className="summary-board">
-          {ratingSummary.map(({ star, count }) => (
-            <div key={star} className="summary-row">
-              <span className="star-label">{star} ★</span>
-              <div className="bar-wrapper">
-                <div className="bar" style={{ width: `${(count / reviews.length) * 100}%` }}></div>
-              </div>
-              <span className="count">{count}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* 📋 Restaurant Info */}
+      <div className="restaurant-info">
+        <p><strong>Cuisine:</strong> {restaurant.cuisine}</p>
+        <p><strong>Price:</strong> {restaurant.price}</p>
+        <p><strong>Location:</strong> {restaurant.location?.address || "Unknown"}</p>
+        <p>{restaurant.description}</p>
+      </div>
 
-      {/* Add Review Form */}
-      <section className="review-form-section">
-        <h2>Add a Review</h2>
-        <form className="review-form" onSubmit={handleAddReview}>
-          <input
-            type="text"
-            name="user"
-            placeholder="Your name"
-            value={newReview.user}
-            onChange={handleReviewChange}
-            required
-          />
-          <select name="rating" value={newReview.rating} onChange={handleReviewChange}>
-            {[5, 4, 3, 2, 1].map(r => (
-              <option key={r} value={r}>{r} Star{r > 1 ? 's' : ''}</option>
-            ))}
-          </select>
+      {/* ✍️ Review Form */}
+      <section className="review-form">
+        <h2>Write a Review</h2>
+        <form onSubmit={handleSubmit}>
+          <label>Comment</label>
           <textarea
-            name="comment"
-            placeholder="Write your review..."
-            value={newReview.comment}
-            onChange={handleReviewChange}
+            value={form.comment}
+            onChange={(e) => setForm({ ...form, comment: e.target.value })}
             required
           />
-          <button type="submit" className="submit-review-btn">Submit</button>
+          <label>Rating</label>
+          <div onMouseLeave={handleHoverOut}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <FaStar
+                key={star}
+                className={`star ${(form.hoveredStar || form.rating) >= star ? "filled" : ""}`}
+                onClick={() => handleStarClick(star)}
+                onMouseEnter={() => handleHover(star)}
+              />
+            ))}
+          </div>
+          <label>Upload Images</label>
+          <input type="file" multiple accept="image/*" onChange={handleImageChange} />
+          <div className="preview-images">
+            {form.images.map((src, i) => (
+              <img key={i} src={src} alt={`Preview ${i}`} />
+            ))}
+          </div>
+          <button type="submit" disabled={submitting}>
+            {submitting ? "Submitting..." : "Submit Review"}
+          </button>
         </form>
       </section>
 
-      {/* Reviews Section */}
-      <section className="reviews-section">
+      {/* 📣 Reviews List */}
+      <section className="reviews">
         <h2>Reviews</h2>
-        <div className="reviews-list">
-          {reviews.map((review, index) => (
-            <div key={index} className="review-card">
-              <div className="review-header">
-                <FaUserCircle size={32} className="user-avatar" />
-                <div className="review-meta">
-                  <h4>{review.user}</h4>
-                  <div className="stars">
-                    {[...Array(5)].map((_, i) => (
-                      <FaStar key={i} color={i < review.rating ? '#FFD700' : '#DDDDDD'} />
-                    ))}
-                  </div>
-                </div>
-                <small className="review-date">{review.date}</small>
+        {reviews.length === 0 && <p>No reviews yet.</p>}
+        {reviews.map((r, i) => (
+          <div key={i} className="review-card">
+            <p><strong>{r.user && r.user.username ? r.user.username : "Anonymous"}</strong></p>
+            <p>{r.comment}</p>
+            <p>
+              {[...Array(5)].map((_, j) => (
+                <FaStar key={j} color={j < r.rating ? "#facc15" : "#ddd"} />
+              ))}
+            </p>
+            {r.images?.length > 0 && (
+              <div className="review-images">
+                {r.images.map((img, j) => (
+                  <img key={j} src={img} alt={`Review image ${j + 1}`} />
+                ))}
               </div>
-              <p className="review-comment">{review.comment}</p>
-            </div>
-          ))}
-        </div>
+            )}
+          </div>
+        ))}
       </section>
 
-      {/* Map Section */}
-      <section className="map-section">
-        <h2>Location</h2>
-        <iframe
-          title="Restaurant Location"
-          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.215209179423!2d-73.98784492452578!3d40.74844097138989!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1712345678901!5m2!1sen!2sus"
-          width="100%"
-          height="400"
-          style={{ border: 0, borderRadius: '8px' }}
-          allowFullScreen
-          loading="lazy"
-        />
-      </section>
+      <RestaurantMapPage location={restaurant.location} />
+      <TripAdvert />
     </div>
   );
 };

@@ -1,211 +1,334 @@
 /* Base Styles */
-.restaurant-detail {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  color: #333;
-  font-family: 'Inter', sans-serif;
-}
-
-h1, h2, h3, h4 {
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f7f7f7;
   margin: 0;
-  font-weight: 600;
+  padding: 0;
+  color: #000000;
 }
 
-h1 { font-size: 2.5rem; }
-h2 { 
-  font-size: 1.8rem; 
-  margin-bottom: 20px;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 10px;
+.restaurants-page {
+  max-width: 1200px;
+  margin: auto;
+  padding: 1rem;
 }
 
 /* Hero Section */
-.hero {
-  height: 60vh;
+.restaurant-hero {
+  position: relative;
+  background: url('https://images.unsplash.com/photo-1600891964599-f61ba0e24092') no-repeat center center/cover;
   background-size: cover;
   background-position: center;
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 40px;
-}
-
-.hero-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  height: 300px;
   display: flex;
-  align-items: flex-end;
-  padding: 40px;
-}
-
-.hero-content {
-  max-width: 600px;
+  align-items: center;
+  justify-content: center;
   color: white;
 }
 
-.hero-subtitle {
+.restaurant-hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5); /* dark overlay */
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.hero-search {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 30px;
+  padding: 0.5rem 1rem;
   display: flex;
-  gap: 15px;
-  margin: 10px 0;
+  align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.hero-search input {
+  flex: 1;
+  border: none;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 30px;
+  background: transparent;
+  outline: none;
+}
+
+.search-icon {
+  color: #888;
+  margin-right: 0.5rem;
+}
+
+/* Filters */
+.filter-section {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-group select {
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* Results Count */
+.results-count {
+  font-weight: bold;
+  margin-bottom: 1rem;
   font-size: 1.1rem;
+}
+
+/* Restaurant List */
+.restaurants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Horizontal Card Layout */
+.restaurant-item {
+  display: flex;
+  flex-direction: row;
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.restaurant-item:hover {
+  transform: translateY(-4px);
+}
+
+/* Image Left Side */
+.image-carousel {
+  position: relative;
+  flex: 0 0 250px;
+  height: 180px;
+  overflow: hidden;
+}
+
+.restaurant-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-right: 1px solid #eee;
+}
+
+/* Favorite and Badge Positioning */
+.favorite-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  padding: 0.4rem;
+  font-size: 1rem;
+  color: #ff5a5f;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.favorite-btn.active {
+  color: red;
+}
+
+.new-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #28a745;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+}
+
+/* Right Side Info */
+.restaurant-info {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Details Structure */
+.info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.rating-container {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .rating {
   display: flex;
   align-items: center;
-  gap: 5px;
+  font-size: 0.9rem;
 }
 
-.favorite-btn {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  border: 1px solid white;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 50px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 15px;
-  cursor: pointer;
-  transition: all 0.3s;
+.star-icon {
+  color: gold;
+  margin-right: 4px;
 }
 
-.favorite-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+.review-count {
+  color: #888;
+  font-size: 0.85rem;
+  margin-left: 4px;
 }
 
-/* Menu Section */
-.menu-section {
-  margin-bottom: 40px;
+.price {
+  font-weight: bold;
 }
 
-.menu-tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.menu-tabs button {
-  padding: 8px 16px;
-  border: none;
-  background: #f0f0f0;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.menu-tabs button.active {
-  background: #ff6b6b;
-  color: white;
-}
-
-.menu-items {
-  display: grid;
-  gap: 15px;
-}
-
-.menu-item {
+.cuisine-location {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.menu-item:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
-.item-text {
-  flex: 1;
-}
-
-.item-description {
-  color: #666;
   font-size: 0.9rem;
-  margin-top: 5px;
+  color: #666;
+  margin-bottom: 0.5rem;
 }
 
-.item-price {
-  font-weight: 600;
-  color: #ff6b6b;
+.location svg {
+  margin-right: 4px;
+  vertical-align: middle;
 }
 
-/* Reviews Section */
-.reviews-section {
-  margin-bottom: 40px;
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
 }
 
-.reviews-list {
-  display: grid;
-  gap: 20px;
-}
-
-.review-card {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.review-header {
+.feature {
+  background: #f1f1f1;
+  border-radius: 12px;
+  padding: 0.3rem 0.6rem;
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 10px;
+  gap: 0.3rem;
 }
 
-.user-avatar {
-  color: #ccc;
-}
-
-.review-meta {
-  flex: 1;
-}
-
-.stars {
+.action-buttons {
   display: flex;
-  gap: 3px;
-  margin-top: 5px;
+  gap: 0.5rem;
 }
 
-.review-date {
-  color: #999;
+.open-now-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: default;
 }
 
-.review-comment {
+.menu-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.menu-btn:hover {
+  background-color: #0056b3;
+}
+
+
+/* No Results */
+.no-results {
+  text-align: center;
+  padding: 2rem;
   color: #555;
-  line-height: 1.5;
 }
 
-/* Map Section */
-.map-section {
-  margin-bottom: 40px;
+.no-results img {
+  width: 150px;
+  margin-bottom: 1rem;
 }
 
-/* Responsive Design */
+.pricing-legend {
+  background-color: #f8f9fa;
+  border-left: 4px solid #007bff;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #333;
+  max-width: 300px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  clear: both; /* Ensures it doesn't overlap with previous elements */
+}
+
+.pricing-legend strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #007bff;
+}
+
+.pricing-legend ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.pricing-legend li {
+  margin-bottom: 1rem;  /* Increased space between categories */
+  display: flex;
+  justify-content: flex-start; /* Aligns the text neatly */
+  flex-direction: column;
+}
+
+.pricing-legend li span {
+  display: inline-block;
+  width: 70px; /* Adjusted width to separate category name and description */
+  font-weight: bold;
+  color: #007bff;
+  margin-right: 10px; /* Adds space between the category and description */
+}
+
+.pricing-legend li span + span {
+  display: inline-block;
+  color: #333; /* Default text color for description */
+}
+
+
 @media (max-width: 768px) {
-  .hero {
-    height: 50vh;
-  }
-  
-  .hero-content {
-    padding: 20px;
-  }
-  
-  .menu-item {
+  .restaurant-item {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+  }
+  .image-carousel {
+    width: 100%;
+    height: 200px;
   }
 }
