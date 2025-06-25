@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../api'; // ou './api' selon ta config alias
 import './Activities.css';
 
 const categories = ["All", "Cultural", "Outdoor", "Market"];
@@ -11,17 +12,13 @@ export default function ActivityPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch activities from backend API
+    // Fetch activities from backend API via axios
     const fetchActivities = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/activities');
-        if (!response.ok) {
-          throw new Error('Failed to fetch activities');
-        }
-        const data = await response.json();
-        setActivities(data);
+        const response = await api.get('/api/activities');
+        setActivities(response.data);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || 'Failed to fetch activities');
       } finally {
         setLoading(false);
       }
@@ -30,7 +27,6 @@ export default function ActivityPage() {
     fetchActivities();
   }, []);
 
-  // Filter activities based on selected category
   const filteredActivities = selectedCategory === "All"
     ? activities
     : activities.filter(a => a.category === selectedCategory);
@@ -60,19 +56,16 @@ export default function ActivityPage() {
         ) : (
           filteredActivities.map(activity => (
             <Link to={`/activities/${activity._id}`} key={activity._id} className="activity-card">
-              {/* Use the first image of the image grid */}
               <div className="activity-images">
                 {activity.images && activity.images.length > 0 ? (
                   <img
-  src={activity.images?.[0] || "https://via.placeholder.com/800x500?text=Activity"}
-  alt={activity.name}
-  className="activity-img"
-/>
-
-
+                    src={activity.images[0] || "https://via.placeholder.com/800x500?text=Activity"}
+                    alt={activity.name}
+                    className="activity-img"
+                  />
                 ) : (
                   <img
-                    src={`http://localhost:5000/uploads/${activity.image}`}  // Fallback to the main image if no images are in the array
+                    src={`${import.meta.env.VITE_API_URL}/uploads/${activity.image}`}
                     alt={activity.name}
                     className="activity-img"
                   />
