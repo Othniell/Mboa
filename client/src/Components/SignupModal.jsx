@@ -1,6 +1,6 @@
 import React from "react";
 import SignupForm from "../pages/signUp"; // adjust path if needed
-import "./signupModal.css"; // your custom styles for modal
+import "./SignupModal.css"; // your custom styles for modal
 
 const SignupModal = ({ onClose }) => {
   return (
