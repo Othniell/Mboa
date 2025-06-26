@@ -9,47 +9,27 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     role: "visitor",
+    username: "",
     firstName: "",
     lastName: "",
     email: "",
     password: "",
     businessName: "",
-    businessImages: [],
-    businessDocs: [],
   });
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "businessImages" || name === "businessDocs") {
-      setForm((prev) => ({
-        ...prev,
-        [name]: Array.from(files),
-      }));
-    } else {
-      setForm((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
-      const formData = new FormData();
-      for (const key in form) {
-        if (Array.isArray(form[key])) {
-          form[key].forEach((file) => formData.append(key, file));
-        } else {
-          formData.append(key, form[key]);
-        }
-      }
-
-      const res = await axios.post("http://localhost:5000/api/auth/signup", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
+      const res = await axios.post("http://localhost:5000/api/auth/signup", form);
       alert(res.data.message || "Signup successful!");
       navigate("/login");
     } catch (error) {
@@ -72,24 +52,49 @@ const Signup = () => {
             </select>
           </div>
 
-            <div className="form-group">
-            <label>User Name</label>
-                <input type="text" name="username" placeholder="Username" onChange={handleChange} required />
+          <div className="form-group">
+            <label>Username</label>
+            <input
+              type="text"
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              placeholder="Enter username"
+              required
+            />
           </div>
 
           <div className="form-group">
             <label>First Name</label>
-            <input type="text" name="firstName" value={form.firstName} onChange={handleChange} required />
+            <input
+              type="text"
+              name="firstName"
+              value={form.firstName}
+              onChange={handleChange}
+              required
+            />
           </div>
 
           <div className="form-group">
             <label>Last Name</label>
-            <input type="text" name="lastName" value={form.lastName} onChange={handleChange} required />
+            <input
+              type="text"
+              name="lastName"
+              value={form.lastName}
+              onChange={handleChange}
+              required
+            />
           </div>
 
           <div className="form-group">
             <label>Email Address</label>
-            <input type="email" name="email" value={form.email} onChange={handleChange} required />
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
           </div>
 
           <div className="form-group password-group">
@@ -112,43 +117,21 @@ const Signup = () => {
           </div>
 
           {form.role === "business" && (
-            <>
-              <div className="form-group">
-                <label>Business Name</label>
-                <input
-                  type="text"
-                  name="businessName"
-                  value={form.businessName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Business Images</label>
-                <input
-                  type="file"
-                  name="businessImages"
-                  onChange={handleChange}
-                  multiple
-                  accept="image/*"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Business Documents</label>
-                <input
-                  type="file"
-                  name="businessDocs"
-                  onChange={handleChange}
-                  multiple
-                  accept=".pdf,image/*"
-                />
-              </div>
-            </>
+            <div className="form-group">
+              <label>Business Name</label>
+              <input
+                type="text"
+                name="businessName"
+                value={form.businessName}
+                onChange={handleChange}
+                required
+              />
+            </div>
           )}
 
-          <button type="submit" className="signup-btn">Create Account</button>
+          <button type="submit" className="signup-btn">
+            Create Account
+          </button>
 
           <div className="login-link">
             Already have an account?{" "}

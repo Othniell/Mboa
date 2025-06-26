@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import "./loginform.css";
 import { useAuth } from "../context/AuthContext";
 
@@ -36,16 +37,15 @@ const Login = () => {
       if (res.data && res.data.token && res.data.user) {
         login(res.data.user, res.data.token);
 
-        // Redirect based on role
         if (res.data.user.role === "business") {
           navigate("/dashboard");
         } else if (res.data.user.role === "visitor") {
           navigate("/");
         } else if (res.data.user.role === "admin") {
-          navigate("/admin"); // admin dashboard
+          navigate("/admin");
         }
       } else {
-        navigate("/"); // fallback
+        navigate("/");
       }
     } catch (error) {
       const errMsg =
@@ -89,8 +89,13 @@ const Login = () => {
               <span
                 className="toggle-password"
                 onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? "Hide" : "Show"}
+                {showPassword ? (
+                  <AiOutlineEyeInvisible size={20} />
+                ) : (
+                  <AiOutlineEye size={20} />
+                )}
               </span>
             </div>
           </div>

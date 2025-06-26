@@ -61,8 +61,6 @@ function HotelDetail() {
 
     try {
       const token = localStorage.getItem("token");
-      console.log("Token being sent:", token);
-
       const response = await fetch(`http://localhost:5000/api/hotels/${hotel._id}/book`, {
         method: "POST",
         headers: {
@@ -247,6 +245,17 @@ function HotelDetail() {
               <div className="overview">
                 <h2>About {hotel.name}</h2>
                 <p>{hotel.description}</p>
+
+                {/* Moved Map below description */}
+                
+                  <h3>Location</h3>
+                  <MapView
+                    latitude={latitude}
+                    longitude={longitude}
+                    markerLabel={hotel.name}
+                    zoom={hotel.locationType === 'city' ? 14 : 12}
+                  />
+                
               </div>
             )}
 
@@ -343,15 +352,7 @@ function HotelDetail() {
             <button onClick={handleBookNow}>Book Now</button>
           </div>
           <TripAdvert />
-          <div className="map-section">
-            <h3>Location</h3>
-            <MapView
-              latitude={latitude}
-              longitude={longitude}
-              markerLabel={hotel.name}
-              zoom={hotel.locationType === 'city' ? 14 : 12}
-            />
-          </div>
+          {/* Removed Map from here */}
         </aside>
       </div>
     </div>

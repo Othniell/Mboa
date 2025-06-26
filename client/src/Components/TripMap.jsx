@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   MapContainer,
   TileLayer,
@@ -20,7 +20,7 @@ import hotelIconUrl from '../assets/icons/hotel.png';
 import restaurantIconUrl from '../assets/icons/restaurant.png';
 import activityIconUrl from '../assets/icons/activity.png';
 
-// Fix default icons
+// Fix default icons for Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -42,12 +42,41 @@ const userIcon = L.icon({
   shadowUrl: markerShadow,
 });
 
-// Routing with voice toggle
+// RoutingMachine with proper event listener cleanup and voice toggle
 function RoutingMachine({ userPosition, destinations, enableVoice }) {
   const map = useMap();
+  const lastVoicePosition = useRef(null);
+
+  // Haversine formula to compute distance in meters
+  function distance(lat1, lon1, lat2, lon2) {
+    const toRad = x => (x * Math.PI) / 180;
+    const R = 6371e3; // meters
+    const φ1 = toRad(lat1);
+    const φ2 = toRad(lat2);
+    const Δφ = toRad(lat2 - lat1);
+    const Δλ = toRad(lon2 - lon1);
+
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  }
 
   useEffect(() => {
     if (!userPosition || destinations.length === 0) return;
+
+    if (enableVoice && lastVoicePosition.current) {
+      const dist = distance(
+        lastVoicePosition.current.lat,
+        lastVoicePosition.current.lng,
+        userPosition.lat,
+        userPosition.lng
+      );
+      if (dist < 5) return; // prevent repeated speech if user hasn't moved enough
+    }
 
     const waypoints = [
       L.latLng(userPosition.lat, userPosition.lng),
@@ -56,32 +85,44 @@ function RoutingMachine({ userPosition, destinations, enableVoice }) {
 
     const control = L.Routing.control({
       waypoints,
-      router: L.Routing.osrmv1({
-        serviceUrl: 'https://router.project-osrm.org/route/v1'
-      }),
+      router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
       routeWhileDragging: false,
       show: false,
       addWaypoints: false,
       createMarker: () => null,
-      formatter: new L.Routing.Formatter({ language: 'en' })
+      formatter: new L.Routing.Formatter({ language: 'en' }),
     }).addTo(map);
 
-    // Optional voice directions via browser speech synthesis
-    if (enableVoice) {
-      control.on('routesfound', (e) => {
-        const instructions = e.routes[0].instructions || [];
-        instructions.forEach((step, index) => {
-          const delay = index * 4000;
-          setTimeout(() => {
+    const onRoutesFound = (e) => {
+      if (!enableVoice) return;  // safeguard
+
+      lastVoicePosition.current = userPosition;
+      window.speechSynthesis.cancel();
+
+      const instructions = e.routes[0].instructions || [];
+      instructions.forEach((step, index) => {
+        setTimeout(() => {
+          if (enableVoice) {
             const utter = new SpeechSynthesisUtterance(step.text);
             utter.lang = 'en-US';
             window.speechSynthesis.speak(utter);
-          }, delay);
-        });
+          }
+        }, index * 4000);
       });
+    };
+
+    if (enableVoice) {
+      control.on('routesfound', onRoutesFound);
+    } else {
+      window.speechSynthesis.cancel();
     }
 
-    return () => map.removeControl(control);
+    return () => {
+      if (enableVoice) {
+        control.off('routesfound', onRoutesFound);
+      }
+      map.removeControl(control);
+    };
   }, [userPosition, destinations, enableVoice]);
 
   return null;
@@ -91,15 +132,73 @@ export default function TripMap({ places }) {
   const [userPosition, setUserPosition] = useState(null);
   const [showRoute, setShowRoute] = useState(false);
   const [voiceOn, setVoiceOn] = useState(false);
+  const [remainingDestinations, setRemainingDestinations] = useState([]);
 
+  // Cancel speech immediately when voice is toggled off
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
+    if (!voiceOn) {
+      window.speechSynthesis.cancel();
+    }
+  }, [voiceOn]);
+
+  // Initialize remaining destinations when route shown
+  useEffect(() => {
+    if (showRoute) {
+      const validPlaces = places.filter(p => p.latitude || p.lat);
+      setRemainingDestinations(validPlaces);
+    } else {
+      setRemainingDestinations([]);
+    }
+  }, [places, showRoute]);
+
+  // Watch user location continuously
+  useEffect(() => {
+    const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         setUserPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
       },
-      (err) => console.error('Geolocation error', err)
+      (err) => console.error('Geolocation error', err),
+      { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
     );
+    return () => navigator.geolocation.clearWatch(watchId);
   }, []);
+
+  // Remove destination once user is close enough (10m)
+  useEffect(() => {
+    if (!userPosition || remainingDestinations.length === 0) return;
+
+    const toRad = x => (x * Math.PI) / 180;
+    const R = 6371e3; // meters
+
+    function distance(lat1, lon1, lat2, lon2) {
+      const φ1 = toRad(lat1);
+      const φ2 = toRad(lat2);
+      const Δφ = toRad(lat2 - lat1);
+      const Δλ = toRad(lon2 - lon1);
+
+      const a =
+        Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+      return R * c;
+    }
+
+    const nextDest = remainingDestinations[0];
+    const distToNext = distance(
+      userPosition.lat,
+      userPosition.lng,
+      nextDest.latitude || nextDest.lat,
+      nextDest.longitude || nextDest.lng
+    );
+
+    const ARRIVAL_THRESHOLD = 10; // meters
+
+    if (distToNext < ARRIVAL_THRESHOLD) {
+      setRemainingDestinations((dests) => dests.slice(1));
+    }
+  }, [userPosition, remainingDestinations]);
 
   const validPlaces = places.filter(p => p.latitude || p.lat);
   const defaultCenter = userPosition || [4.05, 9.7];
@@ -132,7 +231,7 @@ export default function TripMap({ places }) {
       <MapContainer center={defaultCenter} zoom={13} style={{ height: '450px', width: '100%' }}>
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
+          attribution="&copy; OpenStreetMap contributors"
         />
 
         {userPosition && (
@@ -169,8 +268,8 @@ export default function TripMap({ places }) {
           );
         })}
 
-        {showRoute && userPosition && validPlaces.length > 0 && (
-          <RoutingMachine userPosition={userPosition} destinations={validPlaces} enableVoice={voiceOn} />
+        {showRoute && userPosition && remainingDestinations.length > 0 && (
+          <RoutingMachine userPosition={userPosition} destinations={remainingDestinations} enableVoice={voiceOn} />
         )}
       </MapContainer>
     </div>

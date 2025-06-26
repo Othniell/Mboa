@@ -378,17 +378,27 @@
   background-color: #0056b3;
 }
 
-/* Map section */
-.map-section {
-  background-color: #f9f9f9;
+/* Map section below overview */
+.map-inline-section {
+  margin-top: 30px;
   padding: 20px;
+  background-color: #f9f9f9;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  text-align: center;
 }
 
-.map-section h3 {
+.map-inline-section h3 {
   margin-bottom: 15px;
-  text-align: center;
+  color: #222;
+}
+
+/* Override Leaflet container styles in map-inline-section */
+.map-inline-section .leaflet-container {
+  height: 350px;
+  width: 100%;
+  border-radius: 8px;
+  max-width: 100%;
 }
 
 /* Messages */
@@ -418,17 +428,34 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .main-content {
     flex-direction: column;
   }
-  
+  .right-column {
+    width: 100%;
+    min-width: auto;
+  }
+  .left-column {
+    width: 100%;
+    min-width: auto;
+  }
+  .map-inline-section .leaflet-container {
+    height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
   .main-image {
     height: 300px;
   }
   
   .thumbnail-grid {
     grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .map-inline-section .leaflet-container {
+    height: 280px;
   }
 }
 
@@ -452,5 +479,9 @@
   
   .tabs button {
     padding: 10px 15px;
+  }
+
+  .map-inline-section .leaflet-container {
+    height: 220px;
   }
 }
