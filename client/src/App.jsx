@@ -12,9 +12,8 @@ import LoginForm from './pages/LoginForm';
 import TripPlanner from './pages/PlanTrip';
 import ProtectedRoute from './Components/ProtectedRoute';
 import BusinessDashboard from './pages/BusinessDashboard';
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboard from './pages/AdminBusinessReview'
 import AdminLogs from "./pages/AdminLogs";
-import BusinessDetails from "./pages/BusinessDashboard"; // or correct path
 import TripMap from './Components/TripMap';
 
 
@@ -65,7 +64,6 @@ function App() {
           />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/logs" element={<AdminLogs />} />
-          <Route path="/admin/businesses/:id" element={<BusinessDetails />} />
 
         </Routes>
         <Footer />

@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import "./Businessdashboard.css";
 
 const fieldMap = {
@@ -15,7 +18,7 @@ const fieldMap = {
     { name: "priceCategory", label: "Price Category", type: "select", options: ["Luxury", "Mid-range", "Economy"] },
     { name: "policies", label: "Policies (comma-separated)", type: "text" },
     { name: "amenities", label: "Amenities (comma-separated)", type: "text" },
-    { name: "images", label: "Images", type: "file", multiple: true }
+    { name: "images", label: "Images", type: "file", multiple: true },
   ],
   restaurant: [
     { name: "name", label: "Restaurant Name", type: "text", required: true },
@@ -26,7 +29,7 @@ const fieldMap = {
     { name: "cuisine", label: "Cuisine", type: "text" },
     { name: "price", label: "Average Price", type: "number" },
     { name: "priceCategory", label: "Price Category", type: "select", options: ["Luxury", "Mid-range", "Economy"] },
-    { name: "images", label: "Images", type: "file", multiple: true }
+    { name: "images", label: "Images", type: "file", multiple: true },
   ],
   activity: [
     { name: "name", label: "Activity Name", type: "text", required: true },
@@ -36,15 +39,27 @@ const fieldMap = {
     { name: "lng", label: "Longitude", type: "number", required: true },
     { name: "category", label: "Category", type: "text" },
     { name: "priceCategory", label: "Price Category", type: "select", options: ["Luxury", "Mid-range", "Economy"] },
-    { name: "images", label: "Images", type: "file", multiple: true }
-  ]
+    { name: "images", label: "Images", type: "file", multiple: true },
+  ],
 };
 
-const AddBusinessForm = () => {
+const MapView = ({ setLatLng }) => {
+  const map = useMapEvents({
+    click(e) {
+      const { lat, lng } = e.latlng;
+      setLatLng({ lat, lng });
+      map.flyTo(e.latlng, map.getZoom());
+    },
+  });
+  return null;
+};
+
+const BusinessDashboard = () => {
   const [type, setType] = useState("hotel");
   const [formData, setFormData] = useState({});
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [latLng, setLatLng] = useState({ lat: 4.0511, lng: 9.7679 });
 
   const fields = fieldMap[type];
 
@@ -69,20 +84,23 @@ const AddBusinessForm = () => {
       for (const file of images) {
         payload.append("images", file);
       }
+      payload.append("lat", latLng.lat);
+      payload.append("lng", latLng.lng);
 
       const token = localStorage.getItem("token");
       const res = await axios.post("http://localhost:5000/api/business/create", payload, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: token ? `Bearer ${token}` : ""
-        }
+          Authorization: token ? `Bearer ${token}` : "",
+        },
       });
 
-      alert(res.data.message);
+      toast.success(res.data.message || "Business created successfully");
       setFormData({});
       setImages([]);
+      setLatLng({ lat: 4.0511, lng: 9.7679 });
     } catch (err) {
-      alert("Error: " + (err.response?.data?.message || err.message));
+      toast.error("Error: " + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
@@ -136,12 +154,23 @@ const AddBusinessForm = () => {
           </div>
         ))}
 
-        <button type="submit" disabled={loading} className="submit-btn">
+        <div className="map-container">
+          <MapContainer center={latLng} zoom={13} style={{ height: "300px" }}>
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <MapView setLatLng={setLatLng} />
+            <Marker position={latLng}>
+              <Popup>{`Latitude: ${latLng.lat}, Longitude: ${latLng.lng}`}</Popup>
+            </Marker>
+          </MapContainer>
+        </div>
+
+        <button type="submit" disabled={loading}>
           {loading ? "Submitting..." : "Submit Business"}
         </button>
       </form>
+      <ToastContainer position="top-center" autoClose={3000} />
     </div>
   );
 };
 
-export default AddBusinessForm;
+export default BusinessDashboard;

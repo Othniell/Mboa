@@ -10,7 +10,12 @@ const AdminBusinessReview = () => {
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/admin/all-businesses");
+        const token = localStorage.getItem("token");
+        const res = await axios.get("http://localhost:5000/api/admin/all-businesses", {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        });
         setSubmissions(res.data);
       } catch (err) {
         console.error("Failed to fetch", err);
@@ -21,12 +26,19 @@ const AdminBusinessReview = () => {
     fetchAll();
   }, []);
 
-  const handleAction = async (id, type, action) => {
+  const handleAction = async (id, action) => {
     try {
-      await axios.patch(`http://localhost:5000/api/admin/${type}/${id}/${action}`);
+      const token = localStorage.getItem("token");
+      await axios.post(`http://localhost:5000/api/admin/businesses/${id}/${action}`, {}, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
       setSubmissions((prev) =>
         prev.map((item) =>
-          item._id === id ? { ...item, status: action === "approve" ? "validated" : "rejected" } : item
+          item._id === id
+            ? { ...item, status: action === "approve" ? "validated" : "rejected" }
+            : item
         )
       );
     } catch (err) {
@@ -34,14 +46,59 @@ const AdminBusinessReview = () => {
     }
   };
 
- const filteredSubmissions = submissions.filter((item) => {
-  if (item.type) return item.type === filteredType;
-  if (item.category) return item.category === filteredType;
-  return false;
-});
+  const filteredSubmissions = submissions.filter((item) => {
+    const businessType = item.type || item.category;
+    return businessType === filteredType;
+  });
 
-  const pending = filteredSubmissions.filter((item) => item.status === "pending");
-  const validated = filteredSubmissions.filter((item) => item.status === "validated");
+  const pending = filteredSubmissions.filter(
+    (item) => item.status?.toLowerCase() === "pending"
+  );
+
+  const validated = filteredSubmissions.filter(
+    (item) => item.status?.toLowerCase() === "validated"
+  );
+
+  const renderSubmissionCard = (item, showActions = false) => {
+    const locationText =
+      typeof item.location === "object"
+        ? item.location?.address
+        : item.location || item.address || "No location";
+
+    return (
+      <div key={item._id} className="submission-card">
+        <div className="submission-name">{item.name}</div>
+        <div className="submission-desc">{item.description}</div>
+        <div className="submission-location">{locationText}</div>
+        <div className="submission-images">
+          {item.images?.map((img, i) => (
+            <img
+              key={i}
+              src={`http://localhost:5000/uploads/${img}`}
+              alt="Preview"
+              className="submission-image"
+            />
+          ))}
+        </div>
+        {showActions && (
+          <div className="submission-actions">
+            <button
+              onClick={() => handleAction(item._id, "approve")}
+              className="approve-btn"
+            >
+              Approve
+            </button>
+            <button
+              onClick={() => handleAction(item._id, "reject")}
+              className="reject-btn"
+            >
+              Reject
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="admin-container">
@@ -71,37 +128,7 @@ const AdminBusinessReview = () => {
             <div className="empty">No pending submissions.</div>
           ) : (
             <div className="submission-grid">
-              {pending.map((item) => (
-                <div key={item._id} className="submission-card">
-                  <div className="submission-name">{item.name}</div>
-                  <div className="submission-desc">{item.description}</div>
-                  <div className="submission-location">{item.location}</div>
-                  <div className="submission-images">
-                    {item.images?.map((img, i) => (
-                      <img
-                        key={i}
-                        src={`http://localhost:5000/uploads/${img}`}
-                        alt="Preview"
-                        className="submission-image"
-                      />
-                    ))}
-                  </div>
-                  <div className="submission-actions">
-                    <button
-                      onClick={() => handleAction(item._id, item.type, "approve")}
-                      className="approve-btn"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => handleAction(item._id, item.type, "reject")}
-                      className="reject-btn"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </div>
-              ))}
+              {pending.map((item) => renderSubmissionCard(item, true))}
             </div>
           )}
         </section>
@@ -112,23 +139,7 @@ const AdminBusinessReview = () => {
             <div className="empty">No validated businesses.</div>
           ) : (
             <div className="submission-grid">
-              {validated.map((item) => (
-                <div key={item._id} className="submission-card">
-                  <div className="submission-name">{item.name}</div>
-                  <div className="submission-desc">{item.description}</div>
-                  <div className="submission-location">{item.location}</div>
-                  <div className="submission-images">
-                    {item.images?.map((img, i) => (
-                      <img
-                        key={i}
-                        src={`http://localhost:5000/uploads/${img}`}
-                        alt="Preview"
-                        className="submission-image"
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+              {validated.map((item) => renderSubmissionCard(item))}
             </div>
           )}
         </section>

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const AdminLogs = () => {
   const [logs, setLogs] = useState([]);
@@ -14,8 +16,8 @@ const AdminLogs = () => {
         });
         setLogs(res.data);
       } catch (err) {
-        console.error(err);
-        alert("Failed to fetch admin logs");
+        console.error("Failed to fetch logs", err);
+        toast.error("Failed to fetch admin logs. Please try again later.");
       } finally {
         setLoading(false);
       }
@@ -24,7 +26,7 @@ const AdminLogs = () => {
     fetchLogs();
   }, [token]);
 
-  if (loading) return <p>Loading logs...</p>;
+  if (loading) return <div className="loading">Loading logs...</div>;
 
   if (logs.length === 0) return <p>No admin actions logged yet.</p>;
 

@@ -1,4 +1,6 @@
-require("dotenv").config(); // 👈 Always put this at the top!
+// server.js
+
+require("dotenv").config(); // Always put this at the top!
 
 const express = require("express");
 const mongoose = require("mongoose");
@@ -13,7 +15,7 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const tripRoutes = require("./routes/tripRoutes");
 const locationRoute = require('./routes/location');
 const businessRoute = require("./routes/businessRoute");
-const adminRoute = require("./routes/adminRoute");
+const adminRoute = require("./routes/adminRoute"); // Importing admin routes
 
 const app = express();
 
@@ -30,9 +32,9 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/location", locationRoute);
 app.use("/api/business", businessRoute);
-app.use("/api/admin", adminRoute);
+app.use("/api/admin", adminRoute); // Make sure this route is correctly used
 
-// Static folders
+// Static folders for uploads and images
 app.use('/uploads', express.static('uploads'));
 app.use("/images", express.static(path.join(__dirname, "public/images")));
 
@@ -50,3 +52,9 @@ mongoose
     });
   })
   .catch((err) => console.error("❌ DB connection failed", err));
+
+// Error handling middleware (must be the last middleware)
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ message: "Something went wrong" });
+});

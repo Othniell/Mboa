@@ -1,4 +1,3 @@
-// models/Business.js
 const mongoose = require("mongoose");
 
 const businessSchema = new mongoose.Schema({
@@ -8,7 +7,6 @@ const businessSchema = new mongoose.Schema({
     enum: ["hotel", "restaurant", "activity"],
     required: true,
   },
-
   name: { type: String, required: true },
   description: { type: String },
 
@@ -48,7 +46,7 @@ const businessSchema = new mongoose.Schema({
 
   // For Restaurant
   cuisine: { type: String },
-  price: { type: Number }, // optional raw price
+  price: { type: Number },
   reviews: [
     {
       user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -63,5 +61,18 @@ const businessSchema = new mongoose.Schema({
   // For Activity
   category: { type: String },
 }, { timestamps: true });
+
+// Add validation for conditional fields
+businessSchema.path('contact').validate(function(value) {
+  return this.type !== "hotel" || value != null; // Ensure contact is provided for hotels
+}, 'Contact information is required for hotels.');
+
+businessSchema.path('email').validate(function(value) {
+  return this.type !== "hotel" || value != null; // Ensure email is provided for hotels
+}, 'Email is required for hotels.');
+
+businessSchema.path('pricePerNight').validate(function(value) {
+  return this.type !== "hotel" || value != null; // Ensure pricePerNight is provided for hotels
+}, 'Price per night is required for hotels.');
 
 module.exports = mongoose.model("Business", businessSchema);

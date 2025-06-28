@@ -52,3 +52,9 @@
 .submit-btn:hover {
   background-color: #0056b3;
 }
+
+.map-container {
+  margin-top: 2rem;
+  border-radius: 10px;
+  overflow: hidden;
+}
