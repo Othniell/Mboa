@@ -3,8 +3,10 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 
+const Hotel = require("../models/Hotel");
+const Business = require("../models/Business");
+
 const {
-  getAllHotels,
   getHotelById,
   createHotel,
   updateHotel,
@@ -12,33 +14,30 @@ const {
   uploadHotelImages,
 } = require("../controllers/hotelController");
 
-const Hotel = require("../models/Hotel");
 const { protect } = require("../middleware/authMiddleware");
 
-
-
-// Multer config for file upload
+// Multer config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
-    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueName + path.extname(file.originalname));
   },
 });
 const upload = multer({ storage });
 
-// Middleware to validate priceCategory
+// Middleware
 function validatePriceCategory(req, res, next) {
   const { priceCategory } = req.body;
-  if (priceCategory && !['Luxury', 'Mid-range', 'Economy'].includes(priceCategory)) {
+  if (priceCategory && !["Luxury", "Mid-range", "Economy"].includes(priceCategory)) {
     return res.status(400).json({ error: "Invalid price category" });
   }
   next();
 }
 
-// ✅ Book a hotel (place this before `/:id`)
+// ✅ Booking route
 router.post("/:id/book", protect, async (req, res) => {
   try {
     const { roomName, checkIn, checkOut, guests, totalPrice } = req.body;
@@ -52,11 +51,10 @@ router.post("/:id/book", protect, async (req, res) => {
       totalPrice,
     };
 
-    // Avoid full document validation
     await Hotel.updateOne(
       { _id: req.params.id },
       { $push: { bookings: booking } },
-      { runValidators: false } // 🔥 THIS disables full hotel validation
+      { runValidators: false }
     );
 
     res.status(201).json({ message: "Booking successful", booking });
@@ -65,8 +63,21 @@ router.post("/:id/book", protect, async (req, res) => {
   }
 });
 
-// Other Routes
-router.get("/", getAllHotels);
+// ✅ COMBINED hotel fetch route
+router.get("/", async (req, res) => {
+  try {
+    const hotelsFromHotels = await Hotel.find({ status: "approved" });
+    const hotelsFromBusinesses = await Business.find({ type: "hotel", status: "approved" });
+
+    const allHotels = [...hotelsFromHotels, ...hotelsFromBusinesses];
+
+    res.status(200).json(allHotels);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch hotels", error: error.message });
+  }
+});
+
+// CRUD + images
 router.post("/", validatePriceCategory, createHotel);
 router.put("/:id", validatePriceCategory, updateHotel);
 router.delete("/:id", deleteHotel);

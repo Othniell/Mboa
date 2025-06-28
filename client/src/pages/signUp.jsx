@@ -29,7 +29,7 @@ const Signup = () => {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/signup", form);
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`, form);
       alert(res.data.message || "Signup successful!");
       navigate("/login");
     } catch (error) {

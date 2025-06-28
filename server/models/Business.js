@@ -20,7 +20,8 @@ const businessSchema = new mongoose.Schema({
   priceCategory: {
     type: String,
     enum: ["Luxury", "Mid-range", "Economy"],
-    required: true,
+    required: false,
+    default: "Mid-range",
   },
   status: {
     type: String,
@@ -28,9 +29,15 @@ const businessSchema = new mongoose.Schema({
     default: "pending",
   },
 
+  // Required for ALL types
+  email: {
+    type: String,
+    required: true,
+    match: [/.+@.+\..+/, "Please enter a valid email address"],
+  },
+
   // For Hotel
   contact: { type: String },
-  email: { type: String },
   pricePerNight: { type: Number },
   policies: [String],
   amenities: [String],
@@ -62,17 +69,15 @@ const businessSchema = new mongoose.Schema({
   category: { type: String },
 }, { timestamps: true });
 
-// Add validation for conditional fields
-businessSchema.path('contact').validate(function(value) {
-  return this.type !== "hotel" || value != null; // Ensure contact is provided for hotels
+// Hotel-specific field validations
+businessSchema.path('contact').validate(function (value) {
+  return this.type !== "hotel" || value != null;
 }, 'Contact information is required for hotels.');
 
-businessSchema.path('email').validate(function(value) {
-  return this.type !== "hotel" || value != null; // Ensure email is provided for hotels
-}, 'Email is required for hotels.');
-
-businessSchema.path('pricePerNight').validate(function(value) {
-  return this.type !== "hotel" || value != null; // Ensure pricePerNight is provided for hotels
+businessSchema.path('pricePerNight').validate(function (value) {
+  return this.type !== "hotel" || value != null;
 }, 'Price per night is required for hotels.');
+
+// ❌ Removed the outdated email validator because email is now required for all
 
 module.exports = mongoose.model("Business", businessSchema);

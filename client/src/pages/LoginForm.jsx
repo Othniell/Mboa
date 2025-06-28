@@ -32,7 +32,7 @@ const Login = () => {
     setError("");
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", form);
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/login`, form);
 
       if (res.data && res.data.token && res.data.user) {
         login(res.data.user, res.data.token);

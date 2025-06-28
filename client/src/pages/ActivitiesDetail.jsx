@@ -73,7 +73,7 @@ const ActivityDetail = () => {
   // ✅ Fetch Activity (with avg. rating & count)
   const fetchActivity = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/activities/${id}`);
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/activities/${id}`);
       if (!res.ok) throw new Error("Failed to load activity");
       const data = await res.json();
       setActivity(data);
@@ -84,12 +84,12 @@ const ActivityDetail = () => {
     }
   };
 
-  useEffect(() => {
-    fetchActivity();
-  }, [id]);
+ useEffect(() => {
+  fetchActivity();
+}, [id]);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/reviews/activity/${id}`)
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reviews/activity/${id}`)
       .then((res) => res.json())
       .then(setReviews)
       .catch(console.error);
@@ -135,7 +135,7 @@ const ActivityDetail = () => {
       formData.append("activityId", id);
       form.imageFiles.forEach((file) => formData.append("images", file));
 
-      const res = await fetch("http://localhost:5000/api/reviews", {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reviews`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -152,7 +152,7 @@ const ActivityDetail = () => {
       // ✅ Refetch activity to update avg rating
       await fetchActivity();
     } catch (err) {
-      alert("Failed to submit review. Please try again.");
+      alert("Failed to submit review. Please try again.", err);
     } finally {
       setSubmitting(false);
     }

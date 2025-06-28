@@ -38,7 +38,7 @@ function HotelDetail() {
       setError(null);
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/hotels/${id}`, {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/${id}`, {
           headers: {
             Authorization: token ? `Bearer ${token}` : '',
           },
@@ -61,7 +61,7 @@ function HotelDetail() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:5000/api/hotels/${hotel._id}/book`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/${hotel._id}/book`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -149,7 +149,7 @@ function HotelDetail() {
         return;
       }
 
-      const response = await fetch("http://localhost:5000/api/reviews", {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reviews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

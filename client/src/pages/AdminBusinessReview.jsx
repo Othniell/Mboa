@@ -1,17 +1,20 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./AdminBusinessReview.css";
 
 const AdminBusinessReview = () => {
   const [submissions, setSubmissions] = useState([]);
   const [filteredType, setFilteredType] = useState("hotel");
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/admin/all-businesses", {
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/admin/all-businesses`, {
           headers: {
             Authorization: token ? `Bearer ${token}` : "",
           },
@@ -19,6 +22,7 @@ const AdminBusinessReview = () => {
         setSubmissions(res.data);
       } catch (err) {
         console.error("Failed to fetch", err);
+        toast.error("Failed to load businesses.");
       } finally {
         setLoading(false);
       }
@@ -28,12 +32,17 @@ const AdminBusinessReview = () => {
 
   const handleAction = async (id, action) => {
     try {
+      setProcessing(true);
       const token = localStorage.getItem("token");
-      await axios.post(`http://localhost:5000/api/admin/businesses/${id}/${action}`, {}, {
+      const url = `${import.meta.env.VITE_BACKEND_URL}/api/admin/businesses/${id}/${action}`;
+      const res = await axios.post(url, {}, {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
         },
       });
+
+      toast.success(res.data.message || `${action} successful`);
+
       setSubmissions((prev) =>
         prev.map((item) =>
           item._id === id
@@ -43,6 +52,9 @@ const AdminBusinessReview = () => {
       );
     } catch (err) {
       console.error("Action error:", err);
+      toast.error("Action failed.");
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -74,7 +86,7 @@ const AdminBusinessReview = () => {
           {item.images?.map((img, i) => (
             <img
               key={i}
-              src={`http://localhost:5000/uploads/${img}`}
+              src={`${import.meta.env.VITE_BACKEND_URL}/uploads/${img}`}
               alt="Preview"
               className="submission-image"
             />
@@ -85,12 +97,14 @@ const AdminBusinessReview = () => {
             <button
               onClick={() => handleAction(item._id, "approve")}
               className="approve-btn"
+              disabled={processing}
             >
               Approve
             </button>
             <button
               onClick={() => handleAction(item._id, "reject")}
               className="reject-btn"
+              disabled={processing}
             >
               Reject
             </button>
@@ -144,6 +158,8 @@ const AdminBusinessReview = () => {
           )}
         </section>
       </div>
+
+      <ToastContainer position="top-center" autoClose={3000} />
     </div>
   );
 };

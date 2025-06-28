@@ -20,7 +20,7 @@ const RestaurantsList = () => {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/restaurants', {
+        const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/restaurants`, {
           params: {
             priceCategory: priceFilter === 'all' ? undefined : priceFilter,  // Pass priceFilter as query param
           }
@@ -31,7 +31,7 @@ const RestaurantsList = () => {
         const updatedData = await Promise.all(
           restaurantData.map(async (r) => {
             try {
-              const reviewRes = await axios.get(`http://localhost:5000/api/reviews/restaurant/${r._id}`);
+              const reviewRes = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/reviews/restaurant/${r._id}`);
               const reviews = reviewRes.data;
               const avgRating = reviews.length
                 ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)

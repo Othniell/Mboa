@@ -71,7 +71,7 @@ const AddBusinessForm = () => {
       }
 
       const token = localStorage.getItem("token");
-      const res = await axios.post("http://localhost:5000/api/business/create", payload, {
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/business/create`, payload, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: token ? `Bearer ${token}` : ""

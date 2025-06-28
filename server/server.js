@@ -19,7 +19,15 @@ const adminRoute = require("./routes/adminRoute"); // Importing admin routes
 
 const app = express();
 
-app.use(cors());
+// Configure CORS to allow only your frontend URL
+const corsOptions = {
+  origin: 'http://localhost:3000', // Allow requests only from your frontend
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Specify the HTTP methods allowed
+  allowedHeaders: ['Content-Type', 'Authorization'],  // Specify the allowed headers
+};
+
+// Enable CORS with the options
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 

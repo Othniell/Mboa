@@ -23,7 +23,7 @@ export default function HotelsList() {
 
   const [filters, setFilters] = useState({
     minPrice: 0,
-    maxPrice: 300,
+    maxPrice: 300000,
     rating: 0,
     location: "",
     amenities: [],
@@ -32,7 +32,7 @@ export default function HotelsList() {
   useEffect(() => {
     async function fetchHotels() {
       try {
-        const response = await fetch("http://localhost:5000/api/hotels");
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/business/hotels`);
         if (!response.ok) throw new Error("Failed to fetch hotels");
         const data = await response.json();
         setHotels(data);
@@ -63,7 +63,11 @@ export default function HotelsList() {
   }
 
   const filteredHotels = hotels.filter((hotel) => {
-    if (hotel.price < filters.minPrice || hotel.price > filters.maxPrice) return false;
+    if (
+      hotel.pricePerNight < filters.minPrice ||
+      hotel.pricePerNight > filters.maxPrice
+    )
+      return false;
 
     const reviewsCount = hotel.reviews?.length || 0;
     const averageRating = reviewsCount
@@ -71,7 +75,6 @@ export default function HotelsList() {
       : 0;
 
     if (filters.rating > 0 && averageRating < filters.rating) return false;
-    if (filters.location && hotel.location !== filters.location) return false;
 
     if (
       filters.amenities.length > 0 &&
@@ -91,7 +94,7 @@ export default function HotelsList() {
         className="hero"
         style={{
           backgroundImage: `url(${
-            hotels[0]?.heroImage || "http://localhost:5000/uploads/hero.jpg"
+            hotels[0]?.images?.[0] || `${import.meta.env.VITE_BACKEND_URL}/uploads/hero.jpg`
           })`,
           backgroundSize: "cover",
           backgroundPosition: "center",
@@ -152,25 +155,10 @@ export default function HotelsList() {
             </select>
           </div>
 
-          <div className="filter-group">
-            <label htmlFor="location-select">Location</label>
-            <select
-              id="location-select"
-              name="location"
-              value={filters.location}
-              onChange={updateFilter}
-            >
-              <option value="">Any</option>
-              <option value="Akwa">Akwa</option>
-              <option value="Bonanjo">Bonanjo</option>
-              <option value="Mountains">Mountains</option>
-            </select>
-          </div>
-
           <div className="filter-group" aria-label="Amenities filter">
             <label>Amenities</label>
             <div className="checkboxes">
-              {["WiFi", "Pool", "Spa", "Shuttle", "Breakfast", "Parking"].map((amenity) => (
+              {["WiFi", "Pool", "Spa", "Breakfast", "Parking"].map((amenity) => (
                 <label key={amenity}>
                   <input
                     type="checkbox"
@@ -197,22 +185,16 @@ export default function HotelsList() {
                 : 0;
 
               return (
-                <article className="hotel-card" key={hotel._id || hotel.id}>
-                  <Link
-                    to={`/hotels/${hotel._id || hotel.id}`}
-                    className="hotel-link"
-                  >
+                <article className="hotel-card" key={hotel._id}>
+                  <Link to={`/hotels/${hotel._id}`} className="hotel-link">
                     <img
-                      src={hotel.images?.[0] || hotel.image || ""}
+                      src={`${import.meta.env.VITE_BACKEND_URL}/${hotel.images?.[0] || "uploads/hero.jpg"}`}
                       alt={hotel.name}
                       loading="lazy"
                     />
                     <div className="info">
                       <h3>{hotel.name}</h3>
-                      <div
-                        className="rating"
-                        aria-label={`${averageRating.toFixed(1)} star rating`}
-                      >
+                      <div className="rating">
                         {[1, 2, 3, 4, 5].map((i) => (
                           <Star key={i} filled={i <= Math.round(averageRating)} />
                         ))}
@@ -222,21 +204,21 @@ export default function HotelsList() {
                       </div>
                       <p>{hotel.description}</p>
                       <div className="tags">
-                        {hotel.amenities?.length > 0 &&
-                          hotel.amenities.map((a) => <span key={a}>{a}</span>)}
+                        {hotel.amenities?.map((a) => (
+                          <span key={a}>{a}</span>
+                        ))}
                       </div>
                       <p className="price-category">
-                        <strong>Category:</strong> {hotel.priceCategory || "N/A"}
+                        <strong>Category:</strong> {hotel.priceCategory}
                       </p>
                       <div className="bottom-row">
-                        <strong>${hotel.price}/night</strong>
+                        <strong>{hotel.pricePerNight} FCFA / night</strong>
                         <button
                           className="book-btn"
                           onClick={(e) => {
                             e.preventDefault();
                             alert(`Booking hotel: ${hotel.name}`);
                           }}
-                          aria-label={`Book ${hotel.name} now`}
                         >
                           Book Now
                         </button>

@@ -14,7 +14,7 @@ export default function ActivityPage() {
     // Fetch activities from backend API
     const fetchActivities = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/activities');
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/activities`);
         if (!response.ok) {
           throw new Error('Failed to fetch activities');
         }

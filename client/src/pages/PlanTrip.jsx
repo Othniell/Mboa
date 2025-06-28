@@ -106,7 +106,7 @@ const PlanYourTrip = () => {
           const endpoint = endpointMap[key];
           const priceCategory = priceCategories[key];
           const response = await fetch(
-            `http://localhost:5000/api/${endpoint}?priceCategory=${priceCategory}`
+            `${import.meta.env.VITE_BACKEND_URL}/api/${endpoint}?priceCategory=${priceCategory}`
           );
           if (!response.ok) throw new Error(`Failed to fetch ${endpoint}`);
           const data = await response.json();

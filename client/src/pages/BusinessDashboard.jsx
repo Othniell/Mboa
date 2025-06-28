@@ -8,12 +8,12 @@ import "./Businessdashboard.css";
 const fieldMap = {
   hotel: [
     { name: "name", label: "Hotel Name", type: "text", required: true },
+    { name: "email", label: "Email", type: "email", required: true },
     { name: "description", label: "Description", type: "textarea" },
     { name: "address", label: "Address", type: "text" },
     { name: "lat", label: "Latitude", type: "number", required: true },
     { name: "lng", label: "Longitude", type: "number", required: true },
     { name: "contact", label: "Contact", type: "text" },
-    { name: "email", label: "Email", type: "email" },
     { name: "pricePerNight", label: "Price Per Night", type: "number" },
     { name: "priceCategory", label: "Price Category", type: "select", options: ["Luxury", "Mid-range", "Economy"] },
     { name: "policies", label: "Policies (comma-separated)", type: "text" },
@@ -22,8 +22,9 @@ const fieldMap = {
   ],
   restaurant: [
     { name: "name", label: "Restaurant Name", type: "text", required: true },
+    { name: "email", label: "Email", type: "email", required: true },
     { name: "description", label: "Description", type: "textarea" },
-    { name: "location", label: "Address", type: "text" },
+    { name: "address", label: "Address", type: "text" },
     { name: "lat", label: "Latitude", type: "number", required: true },
     { name: "lng", label: "Longitude", type: "number", required: true },
     { name: "cuisine", label: "Cuisine", type: "text" },
@@ -33,8 +34,9 @@ const fieldMap = {
   ],
   activity: [
     { name: "name", label: "Activity Name", type: "text", required: true },
+    { name: "email", label: "Email", type: "email", required: true },
     { name: "description", label: "Description", type: "textarea", required: true },
-    { name: "location", label: "Location Name", type: "text" },
+    { name: "address", label: "Location Name", type: "text" },
     { name: "lat", label: "Latitude", type: "number", required: true },
     { name: "lng", label: "Longitude", type: "number", required: true },
     { name: "category", label: "Category", type: "text" },
@@ -78,29 +80,34 @@ const BusinessDashboard = () => {
     try {
       const payload = new FormData();
       payload.append("type", type);
+
       for (const key in formData) {
         payload.append(key, formData[key]);
       }
+
       for (const file of images) {
         payload.append("images", file);
       }
-      payload.append("lat", latLng.lat);
-      payload.append("lng", latLng.lng);
+
+      // Handle location as nested fields
+      payload.append("location.address", formData.address || "");
+      payload.append("location.lat", latLng.lat);
+      payload.append("location.lng", latLng.lng);
 
       const token = localStorage.getItem("token");
-      const res = await axios.post("http://localhost:5000/api/business/create", payload, {
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/business/create`, payload, {
         headers: {
           "Content-Type": "multipart/form-data",
           Authorization: token ? `Bearer ${token}` : "",
         },
       });
 
-      toast.success(res.data.message || "Business created successfully");
+      toast.success(`✅ Business created!\n📧 Email sent to ${formData.email}`);
       setFormData({});
       setImages([]);
       setLatLng({ lat: 4.0511, lng: 9.7679 });
     } catch (err) {
-      toast.error("Error: " + (err.response?.data?.message || err.message));
+      toast.error("❌ Error: " + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }

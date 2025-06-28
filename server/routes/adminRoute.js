@@ -5,8 +5,9 @@ const AdminActionLog = require("../models/AdminActionLog");
 
 const { protect } = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/admin");
+const { sendBusinessStatusEmail } = require("../utils/emailService"); // ✅ NEW
 
-// ✅ GET all businesses (pending + approved + rejected)
+// GET all businesses
 router.get("/all-businesses", protect, adminMiddleware, async (req, res) => {
   try {
     const allBusinesses = await Business.find().populate("owner", "firstName lastName email");
@@ -17,7 +18,7 @@ router.get("/all-businesses", protect, adminMiddleware, async (req, res) => {
   }
 });
 
-// ✅ GET pending only (if needed separately)
+// GET pending only
 router.get("/businesses/pending", protect, adminMiddleware, async (req, res) => {
   try {
     const pending = await Business.find({ status: "pending" }).populate("owner", "firstName lastName email");
@@ -28,10 +29,10 @@ router.get("/businesses/pending", protect, adminMiddleware, async (req, res) => 
   }
 });
 
-// ✅ Approve business
+// Approve business
 router.post("/businesses/:id/approve", protect, adminMiddleware, async (req, res) => {
   try {
-    const business = await Business.findById(req.params.id);
+    const business = await Business.findById(req.params.id).populate("owner", "firstName email");
     if (!business) return res.status(404).json({ message: "Business not found" });
 
     business.status = "approved";
@@ -43,6 +44,13 @@ router.post("/businesses/:id/approve", protect, adminMiddleware, async (req, res
       action: "approved",
     });
 
+    // ✅ Send email
+    sendBusinessStatusEmail({
+      to: business.owner.email,
+      name: business.owner.firstName,
+      status: "approved"
+    });
+
     res.json({ message: "Business approved successfully" });
   } catch (err) {
     console.error("Error approving business:", err);
@@ -50,10 +58,10 @@ router.post("/businesses/:id/approve", protect, adminMiddleware, async (req, res
   }
 });
 
-// ✅ Reject business
+// Reject business
 router.post("/businesses/:id/reject", protect, adminMiddleware, async (req, res) => {
   try {
-    const business = await Business.findById(req.params.id);
+    const business = await Business.findById(req.params.id).populate("owner", "firstName email");
     if (!business) return res.status(404).json({ message: "Business not found" });
 
     business.status = "rejected";
@@ -65,6 +73,13 @@ router.post("/businesses/:id/reject", protect, adminMiddleware, async (req, res)
       action: "rejected",
     });
 
+    // ✅ Send email
+    sendBusinessStatusEmail({
+      to: business.owner.email,
+      name: business.owner.firstName,
+      status: "rejected"
+    });
+
     res.json({ message: "Business rejected successfully" });
   } catch (err) {
     console.error("Error rejecting business:", err);
@@ -72,7 +87,7 @@ router.post("/businesses/:id/reject", protect, adminMiddleware, async (req, res)
   }
 });
 
-// ✅ Admin logs
+// Admin logs
 router.get("/logs", protect, adminMiddleware, async (req, res) => {
   try {
     const logs = await AdminActionLog.find()
