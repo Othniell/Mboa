@@ -1,0 +1,155 @@
+/* ===== Main Layout ===== */
+.admin-container {
+  display: flex;
+  font-family: Arial, sans-serif;
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+/* ===== Sidebar Navigation ===== */
+.sidebar {
+  width: 220px;
+  background-color: #007bff;
+  color: white;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar h2 {
+  font-size: 20px;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+.sidebar button {
+  background: transparent;
+  border: none;
+  padding: 0.75rem 1rem;
+  color: white;
+  text-align: left;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.sidebar button:hover,
+.sidebar button.active {
+  background-color: #0056b3;
+}
+
+/* ===== Admin Content ===== */
+.admin-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* ===== Section Headings ===== */
+.section-title {
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+  color: #333;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 5px;
+}
+
+/* ===== Submission Grid ===== */
+.submission-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+/* ===== Submission Card ===== */
+.submission-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease;
+}
+
+.submission-card:hover {
+  transform: translateY(-3px);
+}
+
+/* ===== Card Content ===== */
+.submission-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.submission-desc,
+.submission-location {
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #555;
+}
+
+/* ===== Images ===== */
+.submission-images {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.submission-image {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+}
+
+/* ===== Action Buttons ===== */
+.submission-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+}
+
+.approve-btn,
+.reject-btn {
+  padding: 6px 12px;
+  font-size: 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.approve-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.approve-btn:hover {
+  background-color: #218838;
+}
+
+.reject-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.reject-btn:hover {
+  background-color: #c82333;
+}
+
+/* ===== State Messages ===== */
+.loading,
+.empty {
+  text-align: center;
+  font-size: 16px;
+  margin-top: 40px;
+  color: #777;
+}

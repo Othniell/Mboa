@@ -1,0 +1,53 @@
+/* PlanYourTripPromo.css */
+
+.trip-promo {
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  padding: 3rem 1rem;
+  color: white;
+  text-align: center;
+  border-radius: 1.5rem;
+  margin: 3rem auto;
+  max-width: 900px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.promo-content h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.promo-content p {
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+}
+
+.promo-btn {
+  display: inline-block;
+  background-color: #2a7fff;
+  color: #1e1e1e;
+  padding: 0.8rem 1.6rem;
+  border-radius: 2rem;
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.3s ease;
+}
+
+.promo-btn:hover {
+  background-color: #1e3c72;
+}
+
+@media (max-width: 600px) {
+  .promo-content h2 {
+    font-size: 1.5rem;
+  }
+
+  .promo-content p {
+    font-size: 1rem;
+  }
+
+  .promo-btn {
+    padding: 0.7rem 1.2rem;
+    font-size: 0.95rem;
+  }
+}

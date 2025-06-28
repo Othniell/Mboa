@@ -1,0 +1,334 @@
+/* Base Styles */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f7f7f7;
+  margin: 0;
+  padding: 0;
+  color: #000000;
+}
+
+.restaurants-page {
+  max-width: 1200px;
+  margin: auto;
+  padding: 1rem;
+}
+
+/* Hero Section */
+.restaurant-hero {
+  position: relative;
+  background: url('https://images.unsplash.com/photo-1600891964599-f61ba0e24092') no-repeat center center/cover;
+  background-size: cover;
+  background-position: center;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.restaurant-hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5); /* dark overlay */
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.hero-search {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 30px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.hero-search input {
+  flex: 1;
+  border: none;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 30px;
+  background: transparent;
+  outline: none;
+}
+
+.search-icon {
+  color: #888;
+  margin-right: 0.5rem;
+}
+
+/* Filters */
+.filter-section {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-group select {
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* Results Count */
+.results-count {
+  font-weight: bold;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+/* Restaurant List */
+.restaurants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Horizontal Card Layout */
+.restaurant-item {
+  display: flex;
+  flex-direction: row;
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.restaurant-item:hover {
+  transform: translateY(-4px);
+}
+
+/* Image Left Side */
+.image-carousel {
+  position: relative;
+  flex: 0 0 250px;
+  height: 180px;
+  overflow: hidden;
+}
+
+.restaurant-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-right: 1px solid #eee;
+}
+
+/* Favorite and Badge Positioning */
+.favorite-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  padding: 0.4rem;
+  font-size: 1rem;
+  color: #ff5a5f;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.favorite-btn.active {
+  color: red;
+}
+
+.new-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: #28a745;
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+}
+
+/* Right Side Info */
+.restaurant-info {
+  flex: 1;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Details Structure */
+.info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.rating-container {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rating {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.star-icon {
+  color: gold;
+  margin-right: 4px;
+}
+
+.review-count {
+  color: #888;
+  font-size: 0.85rem;
+  margin-left: 4px;
+}
+
+.price {
+  font-weight: bold;
+}
+
+.cuisine-location {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.location svg {
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.feature {
+  background: #f1f1f1;
+  border-radius: 12px;
+  padding: 0.3rem 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.open-now-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: default;
+}
+
+.menu-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.menu-btn:hover {
+  background-color: #0056b3;
+}
+
+
+/* No Results */
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #555;
+}
+
+.no-results img {
+  width: 150px;
+  margin-bottom: 1rem;
+}
+
+.pricing-legend {
+  background-color: #f8f9fa;
+  border-left: 4px solid #007bff;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  color: #333;
+  max-width: 300px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  clear: both; /* Ensures it doesn't overlap with previous elements */
+}
+
+.pricing-legend strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #007bff;
+}
+
+.pricing-legend ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.pricing-legend li {
+  margin-bottom: 1rem;  /* Increased space between categories */
+  display: flex;
+  justify-content: flex-start; /* Aligns the text neatly */
+  flex-direction: column;
+}
+
+.pricing-legend li span {
+  display: inline-block;
+  width: 70px; /* Adjusted width to separate category name and description */
+  font-weight: bold;
+  color: #007bff;
+  margin-right: 10px; /* Adds space between the category and description */
+}
+
+.pricing-legend li span + span {
+  display: inline-block;
+  color: #333; /* Default text color for description */
+}
+
+
+@media (max-width: 768px) {
+  .restaurant-item {
+    flex-direction: column;
+  }
+  .image-carousel {
+    width: 100%;
+    height: 200px;
+  }
+}

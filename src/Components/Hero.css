@@ -1,0 +1,134 @@
+/* Base Styles */
+:root {
+  --primary-color: #ff6b6b;
+  --text-light: rgba(255, 255, 255, 0.9);
+  --gradient: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%);
+  --transition: all 0.5s ease;
+}
+
+.hero {
+  position: relative;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Carousel */
+.carousel {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.slide {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.slide.active {
+  opacity: 1;
+}
+
+.gradient-overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: var(--gradient);
+}
+
+/* Hero Text */
+.hero-content {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-light);
+  z-index: 2;
+  padding: 0 20px;
+}
+
+.text-container {
+  max-width: 800px;
+  animation: fadeInUp 1s ease;
+}
+
+.welcome-text {
+  font-size: 1.5rem;
+  letter-spacing: 5px;
+  font-weight: 300;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+}
+
+.city-name {
+  font-size: 6rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.tagline {
+  font-size: 1.5rem;
+  font-weight: 300;
+  letter-spacing: 1px;
+}
+
+/* Indicators */
+.indicators {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 3;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid white;
+  background: transparent;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.indicator.active {
+  background: white;
+  transform: scale(1.2);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .welcome-text {
+    font-size: 1rem;
+    letter-spacing: 3px;
+  }
+
+  .city-name {
+    font-size: 3.5rem;
+  }
+
+  .tagline {
+    font-size: 1.2rem;
+  }
+}

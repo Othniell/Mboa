@@ -1,0 +1,57 @@
+.hotel-board {
+  padding: 1.5rem;
+  font-family: Arial, sans-serif;
+}
+
+.board-title {
+  font-size: 22px;
+  margin-bottom: 0.5rem;
+}
+
+.owner-info {
+  margin-bottom: 1.5rem;
+  color: #444;
+}
+
+.section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.2rem;
+}
+
+.section-card {
+  background: #f4f8ff;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.section-card:hover {
+  transform: translateY(-3px);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.add-btn {
+  background: #007bff;
+  color: white;
+  font-size: 20px;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.section-placeholder {
+  margin-top: 0.8rem;
+  font-size: 13px;
+  color: #666;
+}

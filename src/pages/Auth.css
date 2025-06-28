@@ -1,0 +1,95 @@
+form {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 30px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 24px;
+  color: #007bff;
+}
+
+label {
+  display: block;
+  margin-bottom: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 6px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease-in-out;
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="text"]:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 6px #a2c8ff;
+}
+
+button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+/* Radios container */
+div {
+  margin-bottom: 15px;
+  color: #333;
+  font-weight: 600;
+}
+
+/* Radio labels */
+input[type="radio"] {
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+/* Space between radio buttons */
+label > input[type="radio"] {
+  margin-left: 0;
+  margin-right: 8px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+label > input[type="radio"] + span {
+  vertical-align: middle;
+}
+
+/* Mobile friendly */
+@media (max-width: 480px) {
+  form {
+    margin: 20px 10px;
+    padding: 20px;
+  }
+}

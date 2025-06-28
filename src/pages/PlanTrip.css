@@ -1,0 +1,367 @@
+.plan-trip-page {
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.hero-section {
+  height: 60vh;
+  background-image: url('https://images.unsplash.com/photo-1582719478250-c89cae4dc85b');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-overlay {
+  background: rgba(0, 51, 102, 0.7);
+  padding: 3rem;
+  border-radius: 1rem;
+  text-align: center;
+  color: white;
+}
+
+.hero-overlay h1 {
+  font-size: 2.5rem;
+}
+
+.hero-overlay p {
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+}
+
+.trip-form {
+  margin: 2rem auto;
+  max-width: 900px;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.category-options {
+  margin: 1rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
+  font-size: 1rem;
+}
+
+.category-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.price-selectors {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 1rem 0;
+}
+
+.category-price {
+  width: 100%;
+  max-width: 500px;
+  text-align: left;
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.category-price label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #1e3c72;
+}
+
+.category-price select {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.category-price p {
+  font-size: 14px;
+  color: #555;
+  margin-top: 0.5rem;
+}
+
+.trip-form button {
+  background-color: #1e3c72;
+  color: white;
+  font-weight: bold;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.trip-form button:hover {
+  background-color: #2a5298;
+}
+
+.empty-message {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #777;
+  font-size: 1.2rem;
+}
+
+.trip-results {
+  padding: 2rem;
+  max-width: 1100px;
+  margin: auto;
+}
+
+.result-grid {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.result-card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.result-card:hover {
+  transform: translateY(-5px);
+}
+
+.result-image {
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+}
+
+.result-info {
+  padding: 1rem;
+}
+
+.result-info h3 {
+  color: #1e3c72;
+  margin-bottom: 0.5rem;
+}
+
+.result-location,
+.result-rating {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.result-description {
+  margin-top: 0.5rem;
+  color: #444;
+  font-size: 0.95rem;
+}
+
+.view-btn {
+  margin-top: 1rem;
+  background-color: #1e3c72;
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+}
+
+.view-btn:hover {
+  background-color: #2a5298;
+}
+
+/* Selection checkbox in suggestion cards */
+.result-info label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  font-weight: 600;
+  color: #1e3c72;
+  cursor: pointer;
+}
+
+.result-info input[type="checkbox"] {
+  transform: scale(1.2);
+  accent-color: #1e3c72;
+  cursor: pointer;
+}
+
+/* Map categories toggle container & save/load buttons */
+.trip-map-section + div {
+  margin: 1rem auto 1.5rem;
+  max-width: 1100px;
+  text-align: center;
+}
+
+.trip-map-section + div label {
+  font-weight: 600;
+  color: #1e3c72;
+  cursor: pointer;
+  user-select: none;
+}
+
+.trip-map-section + div input[type="checkbox"] {
+  margin-right: 0.5rem;
+  transform: scale(1.1);
+  accent-color: #1e3c72;
+  cursor: pointer;
+}
+
+.trip-map-section + div button {
+  background-color: #1e3c72;
+  color: white;
+  font-weight: bold;
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  margin: 0 0.5rem 0 0;
+  transition: background-color 0.3s ease;
+}
+
+.trip-map-section + div button:disabled {
+  background-color: #a0a0a0;
+  cursor: not-allowed;
+}
+
+.trip-map-section + div button:hover:not(:disabled) {
+  background-color: #2a5298;
+}
+
+/* Mobile Carousel Scroll for Results */
+@media screen and (max-width: 600px) {
+  .result-grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .result-card {
+    flex: 0 0 85%;
+    scroll-snap-align: start;
+  }
+
+  .result-grid::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .result-grid::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+  }
+
+  .result-grid::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .hero-overlay h1 {
+    font-size: 1.8rem;
+  }
+
+  .hero-overlay p {
+    font-size: 1rem;
+  }
+
+  .trip-map-section + div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .trip-map-section + div button {
+    width: 90%;
+    margin: 0 auto;
+  }
+}
+
+/* Trip Map Section Styling */
+.trip-map-section {
+  margin: 2rem auto;
+  padding: 1rem;
+  max-width: 1100px;
+}
+
+.leaflet-container {
+  height: 450px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Responsive tweaks for smaller screens */
+@media screen and (max-width: 768px) {
+  .trip-form {
+    padding: 0 1rem;
+  }
+
+  .category-options {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .trip-map-section {
+    padding: 1rem 0.5rem;
+  }
+
+  .leaflet-container {
+    height: 300px !important;
+  }
+
+  .trip-results h2,
+  .trip-map-section h2 {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+
+  .trip-form button,
+  .view-btn,
+  .popup-itinerary-btn {
+    font-size: 1rem;
+    padding: 0.75rem 1.25rem;
+  }
+}
+
+/* Map Controls (Itinerary + Voice Nav) */
+.map-controls {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.voice-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.95rem;
+  margin-left: 1rem;
+  color: #333;
+}
+
+.voice-toggle-label input[type="checkbox"] {
+  margin-right: 0.5rem;
+  transform: scale(1.1);
+  accent-color: #1e3c72;
+}
+
+@media screen and (max-width: 600px) {
+  .map-controls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .voice-toggle-label {
+    margin-top: 0.5rem;
+    margin-left: 0;
+  }
+}

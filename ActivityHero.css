@@ -1,0 +1,30 @@
+/* ActivityHero.css */
+.activity-hero {
+  height: 300px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.hero-overlay {
+  background-color: rgba(0, 0, 0, 0.4);
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  padding: 20px;
+}
+
+.hero-content h1 {
+  color: white;
+  margin: 0;
+  font-size: 2rem;
+}
+
+.hero-content p {
+  color: white;
+  margin-top: 5px;
+}
