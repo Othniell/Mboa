@@ -60,7 +60,6 @@
 
 .more-images-overlay::before {
   content: '';
-  background-image: url('/placeholder.jpg'); /* fallback image */
   background-size: cover;
   background-position: center;
   position: absolute;

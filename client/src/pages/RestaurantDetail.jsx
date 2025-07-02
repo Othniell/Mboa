@@ -179,7 +179,7 @@ const RestaurantDetail = () => {
       <div className="image-gallery">
         <div className="main-image">
           <img
-            src={restaurant.images?.[currentImageIndex] || "/placeholder.jpg"}
+            src={restaurant.images?.[currentImageIndex] }
             alt="Main"
           />
           <button className="nav-button prev" onClick={prevImage}>‹</button>
