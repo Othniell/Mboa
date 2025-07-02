@@ -26,7 +26,7 @@ const RestaurantDetail = () => {
   useEffect(() => {
     const fetchRestaurant = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/restaurants/${id}`);
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/restaurants/${id}`);
         const data = await res.json();
         setRestaurant(data);
       } catch (err) {
@@ -42,7 +42,7 @@ const RestaurantDetail = () => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/reviews/restaurant/${id}`);
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reviews/restaurant/${id}`);
         const data = await res.json();
         console.log("Fetched Reviews:", data); // 👈 Add this
         setReviews(data);
@@ -107,7 +107,7 @@ const RestaurantDetail = () => {
         formData.append("images", file);
       });
 
-      const res = await fetch("http://localhost:5000/api/reviews", {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reviews`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -144,7 +144,11 @@ const RestaurantDetail = () => {
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : null;
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return (
+  <div className="loading-spinner">
+    <div className="spinner"></div>
+  </div>
+);
   if (error) return <p>{error}</p>;
 
   return (
@@ -175,7 +179,7 @@ const RestaurantDetail = () => {
       <div className="image-gallery">
         <div className="main-image">
           <img
-            src={restaurant.images?.[currentImageIndex] || "/placeholder.jpg"}
+            src={restaurant.images?.[currentImageIndex] }
             alt="Main"
           />
           <button className="nav-button prev" onClick={prevImage}>‹</button>

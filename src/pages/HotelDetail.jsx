@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaStar, FaMapMarkerAlt, FaUser } from 'react-icons/fa';
+import { FaStar, FaMapMarkerAlt, FaUser, FaCamera } from 'react-icons/fa';
 import { IoIosArrowBack } from 'react-icons/io';
 import './HotelDetail.css';
 import MapView from "../Components/MapView";
@@ -11,6 +11,8 @@ function HotelDetail() {
   const navigate = useNavigate();
 
   const [hotel, setHotel] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -18,15 +20,14 @@ function HotelDetail() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
   const [reviewForm, setReviewForm] = useState({
-    name: '',
     rating: 0,
-    title: '',
     comment: '',
-    email: ''
+    images: []
   });
   const [hoverRating, setHoverRating] = useState(0);
   const [formErrors, setFormErrors] = useState({});
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
 
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
@@ -38,7 +39,7 @@ function HotelDetail() {
       setError(null);
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/hotels/${id}`, {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/${id}`, {
           headers: {
             Authorization: token ? `Bearer ${token}` : '',
           },
@@ -46,6 +47,7 @@ function HotelDetail() {
         if (!response.ok) throw new Error('Failed to fetch hotel data');
         const data = await response.json();
         setHotel(data);
+        setReviews(data.reviews);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -56,12 +58,20 @@ function HotelDetail() {
     fetchHotel();
   }, [id, submitSuccess]);
 
+  useEffect(() => {
+    if (reviews.length > 0) {
+      const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+      const avgRating = totalRating / reviews.length;
+      setAverageRating(Number(avgRating.toFixed(1)));
+    }
+  }, [reviews]);
+
   const handleBookNow = async () => {
     if (!checkIn || !checkOut) return alert("Select dates");
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:5000/api/hotels/${hotel._id}/book`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/hotels/${hotel._id}/book`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -122,16 +132,107 @@ function HotelDetail() {
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setImageUploading(true);
+    setError('');
+
+    try {
+      // Validate files
+      const validFiles = files.filter(file => {
+        const isValidType = file.type.match('image.*');
+        const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+        return isValidType && isValidSize;
+      });
+
+      if (validFiles.length === 0) {
+        throw new Error('Please select valid images (JPEG/PNG under 5MB)');
+      }
+
+      if (validFiles.length !== files.length) {
+        setError('Some files were skipped (must be images <5MB)');
+      }
+
+      // Create previews
+      const previewUrls = validFiles.map(file => URL.createObjectURL(file));
+      setReviewForm(prev => ({
+        ...prev,
+        images: [...prev.images, ...previewUrls]
+      }));
+
+      // Upload to server
+      const uploadPromises = validFiles.map(async (file, index) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/upload`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to upload image ${index + 1}`);
+        }
+
+        return await response.json();
+      });
+
+      const uploadResults = await Promise.all(uploadPromises);
+      const uploadedUrls = uploadResults.map(result => result.imageUrl).filter(url => url);
+      
+      // Replace previews with permanent URLs
+      setReviewForm(prev => ({
+        ...prev,
+        images: [
+          ...prev.images.filter(img => !previewUrls.includes(img)),
+          ...uploadedUrls
+        ]
+      }));
+
+      if (uploadedUrls.length < validFiles.length) {
+        setError(`Uploaded ${uploadedUrls.length} of ${validFiles.length} images`);
+      }
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      setError(error.message || 'Image upload failed. You can still submit your review without images.');
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
+  const removeImage = (index) => {
+    // Revoke object URL if it's a local preview
+    if (reviewForm.images[index].startsWith('blob:')) {
+      URL.revokeObjectURL(reviewForm.images[index]);
+    }
+    
+    setReviewForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  // Clean up object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      reviewForm.images.forEach(image => {
+        if (image.startsWith('blob:')) {
+          URL.revokeObjectURL(image);
+        }
+      });
+    };
+  }, [reviewForm.images]);
+
   const validateForm = () => {
     const errors = {};
-    if (!reviewForm.name) errors.name = 'Name is required';
-    if (!reviewForm.email) {
-      errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(reviewForm.email)) {
-      errors.email = 'Please enter a valid email';
-    }
     if (reviewForm.rating === 0) errors.rating = 'Please select a rating';
-    if (!reviewForm.title) errors.title = 'Title is required';
     if (!reviewForm.comment) errors.comment = 'Review text is required';
 
     setFormErrors(errors);
@@ -149,7 +250,10 @@ function HotelDetail() {
         return;
       }
 
-      const response = await fetch("http://localhost:5000/api/reviews", {
+      // Filter out any local blob URLs before submission
+      const submittedImages = reviewForm.images.filter(img => !img.startsWith('blob:'));
+
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reviews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -157,11 +261,9 @@ function HotelDetail() {
         },
         body: JSON.stringify({
           hotelId: hotel._id,
-          name: reviewForm.name,
-          email: reviewForm.email,
-          title: reviewForm.title,
           comment: reviewForm.comment,
           rating: Number(reviewForm.rating),
+          images: submittedImages
         }),
       });
 
@@ -170,19 +272,24 @@ function HotelDetail() {
         throw new Error(err.error || "Failed to submit review");
       }
 
-      await response.json();
-      setReviewForm({ name: '', email: '', title: '', comment: '', rating: 0 });
+      // Clear form on success
+      setReviewForm({ rating: 0, comment: '', images: [] });
       setSubmitSuccess(true);
       setTimeout(() => setSubmitSuccess(false), 4000);
       setError(null);
+      
     } catch (error) {
       console.error("Submit review failed:", error.message);
       setError(error.message);
     }
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
-  if (error) return <div className="error">Error: {error}</div>;
+  if (loading) return (
+    <div className="loading-spinner">
+      <div className="spinner"></div>
+    </div>
+  );
+  if (error && !hotel) return <div className="error">Error: {error}</div>;
   if (!hotel) return <div className="not-found">Hotel not found</div>;
 
   const latitude = hotel.locationCoords?.latitude || 4.0511;
@@ -199,10 +306,10 @@ function HotelDetail() {
         <div className="hotel-rating">
           <div className="stars">
             {[...Array(5)].map((_, i) => (
-              <FaStar key={i} className={i < hotel.rating ? 'filled' : ''} />
+              <FaStar key={i} className={i < averageRating ? 'filled' : ''} />
             ))}
           </div>
-          <span>{hotel.rating} ({hotel.reviews?.length || 0} reviews)</span>
+          <span>{averageRating || 0} ({hotel.reviews?.length || 0} reviews)</span>
         </div>
         <div className="location">
           <FaMapMarkerAlt />
@@ -246,16 +353,13 @@ function HotelDetail() {
                 <h2>About {hotel.name}</h2>
                 <p>{hotel.description}</p>
 
-                {/* Moved Map below description */}
-                
-                  <h3>Location</h3>
-                  <MapView
-                    latitude={latitude}
-                    longitude={longitude}
-                    markerLabel={hotel.name}
-                    zoom={hotel.locationType === 'city' ? 14 : 12}
-                  />
-                
+                <h3>Location</h3>
+                <MapView
+                  latitude={latitude}
+                  longitude={longitude}
+                  markerLabel={hotel.name}
+                  zoom={hotel.locationType === 'city' ? 14 : 12}
+                />
               </div>
             )}
 
@@ -277,34 +381,43 @@ function HotelDetail() {
                 {hotel.reviews?.map((review, index) => (
                   <div key={index} className="review-item">
                     <div className="review-header">
-                      <div className="review-name"><FaUser /> {review.name}</div>
+                      <div className="review-name"><FaUser /> {review.name || 'Anonymous'}</div>
                       <div className="review-rating">
                         {[...Array(5)].map((_, i) => (
                           <FaStar key={i} className={i < review.rating ? 'filled' : ''} />
                         ))}
                       </div>
                     </div>
-                    <div className="review-title">{review.title}</div>
                     <p className="review-comment">{review.comment}</p>
+                    {review.images && review.images.length > 0 && (
+                      <div className="review-images">
+                        {review.images.map((img, idx) => (
+                          <img key={idx} src={img} alt={`Review ${index + 1}`} className="review-image" />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
 
                 <form className="review-form" onSubmit={handleSubmitReview}>
                   <h3>Submit Your Review</h3>
-                  {submitSuccess && <p className="success-message">Review submitted successfully!</p>}
-                  {error && <p className="error-message">{error}</p>}
-
-                  <input type="text" name="name" placeholder="Your Name" value={reviewForm.name} onChange={handleInputChange} />
-                  {formErrors.name && <p className="form-error">{formErrors.name}</p>}
-
-                  <input type="email" name="email" placeholder="Your Email" value={reviewForm.email} onChange={handleInputChange} />
-                  {formErrors.email && <p className="form-error">{formErrors.email}</p>}
-
-                  <input type="text" name="title" placeholder="Review Title" value={reviewForm.title} onChange={handleInputChange} />
-                  {formErrors.title && <p className="form-error">{formErrors.title}</p>}
-
-                  <textarea name="comment" placeholder="Your Review" value={reviewForm.comment} onChange={handleInputChange} />
-                  {formErrors.comment && <p className="form-error">{formErrors.comment}</p>}
+                  {submitSuccess && (
+                    <div className="success-message">
+                      Review submitted successfully!
+                    </div>
+                  )}
+                  
+                  {error && (
+                    <div className="error-message">
+                      {error}
+                      <button 
+                        onClick={() => setError('')}
+                        className="dismiss-error"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
 
                   <div className="rating-input">
                     {[...Array(5)].map((_, i) => {
@@ -320,9 +433,72 @@ function HotelDetail() {
                       );
                     })}
                   </div>
-                  {formErrors.rating && <p className="form-error">{formErrors.rating}</p>}
+                  {formErrors.rating && <div className="form-error">{formErrors.rating}</div>}
 
-                  <button type="submit">Submit Review</button>
+                  <textarea 
+                    name="comment" 
+                    placeholder="Share your experience..." 
+                    value={reviewForm.comment} 
+                    onChange={handleInputChange} 
+                    rows="5"
+                  />
+                  {formErrors.comment && <div className="form-error">{formErrors.comment}</div>}
+
+                  <div className="image-upload-section">
+                    <label className="upload-button">
+                      <FaCamera /> Add Photos
+                      <input 
+                        type="file" 
+                        multiple 
+                        accept="image/jpeg, image/png, image/webp" 
+                        onChange={handleImageUpload} 
+                        style={{ display: 'none' }} 
+                        disabled={imageUploading}
+                      />
+                    </label>
+                    
+                    {imageUploading && (
+                      <div className="upload-status">
+                        <div className="upload-spinner"></div>
+                        <span>Uploading {reviewForm.images.filter(img => img.startsWith('blob:')).length} image(s)...</span>
+                      </div>
+                    )}
+                    
+                    <div className="upload-requirements">
+                      <small>Max 5MB per image (JPEG, PNG, WEBP)</small>
+                    </div>
+
+                    <div className="image-preview">
+                      {reviewForm.images.map((img, index) => (
+                        <div key={index} className="preview-item">
+                          <img 
+                            src={img} 
+                            alt={`Preview ${index}`} 
+                            className={img.startsWith('blob:') ? 'upload-pending' : ''}
+                          />
+                          <button 
+                            type="button" 
+                            className="remove-image" 
+                            onClick={() => removeImage(index)}
+                            disabled={imageUploading}
+                          >
+                            ×
+                          </button>
+                          {img.startsWith('blob:') && (
+                            <div className="upload-progress">Uploading...</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    className="submit-review-btn"
+                    disabled={imageUploading}
+                  >
+                    {imageUploading ? 'Processing...' : 'Submit Review'}
+                  </button>
                 </form>
               </div>
             )}
@@ -332,7 +508,7 @@ function HotelDetail() {
         <aside className="right-column">
           <div className="booking-widget">
             <h3>Book Your Stay</h3>
-            {bookingSuccess && <p className="success-message">Booking successful!</p>}
+            {bookingSuccess && <div className="success-message">Booking successful!</div>}
             <label>
               Check-in:
               <input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
@@ -352,7 +528,6 @@ function HotelDetail() {
             <button onClick={handleBookNow}>Book Now</button>
           </div>
           <TripAdvert />
-          {/* Removed Map from here */}
         </aside>
       </div>
     </div>

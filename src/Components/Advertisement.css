@@ -22,19 +22,32 @@
   margin: 0 auto 2rem;
 }
 
+/* Advertisement.css */
 .promo-btn {
   display: inline-block;
-  background-color: #2a7fff;
-  color: #1e1e1e;
-  padding: 0.8rem 1.6rem;
-  border-radius: 2rem;
+  padding: 12px 24px;
+  background-color: #4a6bdf;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 600;
   text-decoration: none;
-  font-weight: bold;
-  transition: background-color 0.3s ease;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 1rem;
 }
 
 .promo-btn:hover {
-  background-color: #1e3c72;
+  background-color: #3a56c0;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.promo-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 600px) {

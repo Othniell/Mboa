@@ -38,6 +38,9 @@ const PlanYourTrip = () => {
     activity: true,
   });
 
+  // Voice guidance state
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+
   const priceDescriptions = {
     Luxury:
       'Expect top-tier services, exclusive locations, and exceptional amenities. Prices are premium, with a focus on providing an unforgettable, high-end experience.',
@@ -105,9 +108,7 @@ const PlanYourTrip = () => {
         if (categories[key]) {
           const endpoint = endpointMap[key];
           const priceCategory = priceCategories[key];
-          const response = await fetch(
-            `http://localhost:5000/api/${endpoint}?priceCategory=${priceCategory}`
-          );
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/${endpoint}?priceCategory=${priceCategory}`);
           if (!response.ok) throw new Error(`Failed to fetch ${endpoint}`);
           const data = await response.json();
 
@@ -135,12 +136,19 @@ const PlanYourTrip = () => {
     }
   }, [categories, priceCategories]);
 
-  // Save trip to localStorage (includes selections)
+  // Save trip to localStorage
   const saveTrip = () => {
     try {
       localStorage.setItem(
         'savedTrip',
-        JSON.stringify({ categories, priceCategories, results, selectedPlaces, mapCategories })
+        JSON.stringify({ 
+          categories, 
+          priceCategories, 
+          results, 
+          selectedPlaces, 
+          mapCategories,
+          voiceEnabled 
+        })
       );
       alert('Trip saved successfully!');
     } catch {
@@ -162,6 +170,7 @@ const PlanYourTrip = () => {
         results: savedResults,
         selectedPlaces: savedSelected,
         mapCategories: savedMapCategories,
+        voiceEnabled: savedVoiceEnabled
       } = JSON.parse(saved);
 
       setCategories(savedCategories);
@@ -169,6 +178,7 @@ const PlanYourTrip = () => {
       setResults(savedResults);
       setSelectedPlaces(savedSelected);
       setMapCategories(savedMapCategories);
+      setVoiceEnabled(savedVoiceEnabled || false);
       alert('Trip loaded!');
     } catch {
       alert('Failed to load trip.');
@@ -182,10 +192,22 @@ const PlanYourTrip = () => {
     return 'restaurant';
   };
 
-  // Filter selected places by mapCategories (only show selected places matching map categories)
+  // Filter selected places by mapCategories
   const filteredSelectedPlacesForMap = selectedPlaces.filter((place) =>
     mapCategories[getCategory(place)]
   );
+
+  // Speak welcome message when voice is enabled
+  useEffect(() => {
+    if (voiceEnabled && selectedPlaces.length > 0) {
+      const utterance = new SpeechSynthesisUtterance(
+        "Voice guidance enabled. You have selected " + 
+        selectedPlaces.length + 
+        " destinations. Enable the itinerary to begin navigation."
+      );
+      window.speechSynthesis.speak(utterance);
+    }
+  }, [voiceEnabled, selectedPlaces]);
 
   return (
     <div className="plan-trip-page">
@@ -297,8 +319,21 @@ const PlanYourTrip = () => {
             ))}
           </div>
 
+          {/* Voice toggle */}
+          <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
+            <label>
+              <input
+                type="checkbox"
+                checked={voiceEnabled}
+                onChange={(e) => setVoiceEnabled(e.target.checked)}
+                style={{ marginRight: '0.5rem' }}
+              />
+              Enable Voice Guidance
+            </label>
+          </div>
+
           {/* Save / Load buttons */}
-          <div style={{ marginBottom: '1rem' }}>
+          <div style={{ marginBottom: '1rem', textAlign: 'center' }}>
             <button
               onClick={saveTrip}
               disabled={selectedPlaces.length === 0}
@@ -315,7 +350,7 @@ const PlanYourTrip = () => {
           <div className="trip-map-section">
             <h2 style={{ textAlign: 'center', marginTop: '2rem' }}>Your Trip Map</h2>
             {selectedPlaces.length > 0 ? (
-              <TripMap places={filteredSelectedPlacesForMap} />
+              <TripMap places={filteredSelectedPlacesForMap} voiceEnabled={voiceEnabled} />
             ) : (
               <p style={{ textAlign: 'center', color: '#666' }}>
                 Select places above to see them on the map.

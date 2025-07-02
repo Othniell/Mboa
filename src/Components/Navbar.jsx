@@ -8,14 +8,14 @@ import {
   FaUser,
   FaUserPlus,
   FaTimes,
+  FaSignOutAlt, 
 } from "react-icons/fa";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import LoginModal from "./LoginModal";
-import SignupModal from "./SignupModal";
+import Login from "../pages/LoginForm";
+import Signup from "../pages/signUp";
 import "./Navbar.css";
 import { useAuth } from "../context/AuthContext";
 
-// Custom hook for mobile view state management
 const useMobileView = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -48,7 +48,6 @@ const useMobileView = () => {
   };
 };
 
-// Reusable SearchForm component
 const SearchForm = React.memo(
   ({ isMobile = false, searchQuery, setSearchQuery, onSubmit }) => (
     <div className={isMobile ? "mobile-search-form" : "navbar-search"}>
@@ -65,14 +64,8 @@ const SearchForm = React.memo(
   )
 );
 
-// Reusable AuthButtons component
 const AuthButtons = React.memo(
-  ({
-    isMobile = false,
-    onButtonClick,
-    setShowLoginModal,
-    setShowSignupModal,
-  }) => {
+  ({ isMobile = false, onButtonClick, setShowLogin, setShowSignup }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -87,8 +80,9 @@ const AuthButtons = React.memo(
               navigate("/");
             }}
             className={`btn ${isMobile ? "" : "btn-logout"}`}
+            aria-label="Logout"
           >
-            Logout
+            <FaSignOutAlt className="logout-icon" />
           </button>
         </>
       );
@@ -98,10 +92,10 @@ const AuthButtons = React.memo(
       <>
         <button
           onClick={() => {
-            setShowLoginModal(true);
+            setShowLogin(true);
             onButtonClick?.();
           }}
-          className={`btn ${isMobile ? "btn-icon-text" : "btn-login"}`}
+          className={`btn ${isMobile ? "btn-icon-text btn-login" : "btn-login"}`}
           aria-label="Login"
         >
           {isMobile ? (
@@ -117,10 +111,10 @@ const AuthButtons = React.memo(
         </button>
         <button
           onClick={() => {
-            setShowSignupModal(true);
+            setShowSignup(true);
             onButtonClick?.();
           }}
-          className={`btn ${isMobile ? "btn-icon-text" : "btn-signup"}`}
+          className={`btn ${isMobile ? "btn-icon-text btn-signup" : "btn-signup"}`}
           aria-label="Sign Up"
         >
           {isMobile ? (
@@ -142,8 +136,8 @@ const Navbar = () => {
     useMobileView();
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showSignupModal, setShowSignupModal] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -163,8 +157,8 @@ const Navbar = () => {
 
   useEffect(() => {
     closeAll();
-    setShowLoginModal(false);
-    setShowSignupModal(false);
+    setShowLogin(false);
+    setShowSignup(false);
   }, [location, closeAll]);
 
   const handleSearch = useCallback(
@@ -225,8 +219,8 @@ const Navbar = () => {
           {isDesktop && (
             <div className="navbar-auth">
               <AuthButtons
-                setShowLoginModal={setShowLoginModal}
-                setShowSignupModal={setShowSignupModal}
+                setShowLogin={setShowLogin}
+                setShowSignup={setShowSignup}
               />
             </div>
           )}
@@ -252,7 +246,6 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Mobile Search (below navbar) */}
       {!isDesktop && isSearchOpen && (
         <div className="mobile-search-wrapper">
           <SearchForm
@@ -264,7 +257,6 @@ const Navbar = () => {
         </div>
       )}
 
-      {/* Mobile Menu (slides from right) */}
       {!isDesktop && (
         <>
           <div className={`menu-overlay ${isMenuOpen ? 'active' : ''}`} onClick={closeAll}></div>
@@ -272,6 +264,15 @@ const Navbar = () => {
             <button className="close-menu" onClick={closeAll}>
               <FaTimes />
             </button>
+            
+            <div className="mobile-auth">
+              <AuthButtons
+                isMobile
+                onButtonClick={closeAll}
+                setShowLogin={setShowLogin}
+                setShowSignup={setShowSignup}
+              />
+            </div>
             
             <ul className="mobile-nav-links">
               {renderNavItems()}
@@ -285,35 +286,27 @@ const Navbar = () => {
                 onSubmit={handleSearch}
               />
             </div>
-            
-            <div className="mobile-auth">
-              <AuthButtons
-                isMobile
-                onButtonClick={closeAll}
-                setShowLoginModal={setShowLoginModal}
-                setShowSignupModal={setShowSignupModal}
-              />
-            </div>
           </div>
         </>
       )}
 
-      {/* Modals */}
-      {showLoginModal && (
-        <LoginModal
-          onClose={() => setShowLoginModal(false)}
+      {showLogin && (
+        <Login
+          isModal={true}
+          onClose={() => setShowLogin(false)}
           onLoginSuccess={() => {
-            setShowLoginModal(false);
+            setShowLogin(false);
             navigate("/dashboard");
           }}
         />
       )}
 
-      {showSignupModal && (
-        <SignupModal
-          onClose={() => setShowSignupModal(false)}
+      {showSignup && (
+        <Signup
+          isModal={true}
+          onClose={() => setShowSignup(false)}
           onSignupSuccess={() => {
-            setShowSignupModal(false);
+            setShowSignup(false);
             navigate("/dashboard");
           }}
         />

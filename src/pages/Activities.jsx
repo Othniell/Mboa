@@ -14,7 +14,7 @@ export default function ActivityPage() {
     // Fetch activities from backend API
     const fetchActivities = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/activities');
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/activities`);
         if (!response.ok) {
           throw new Error('Failed to fetch activities');
         }
@@ -35,7 +35,11 @@ export default function ActivityPage() {
     ? activities
     : activities.filter(a => a.category === selectedCategory);
 
-  if (loading) return <div>Loading activities...</div>;
+  if (loading) return (
+  <div className="loading-spinner">
+    <div className="spinner"></div>
+  </div>
+);
   if (error) return <div>Error: {error}</div>;
 
   return (

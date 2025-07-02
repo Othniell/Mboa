@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import "./Hotels.css";
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import './Hotels.css';
 
 function Star({ filled }) {
   return (
@@ -19,11 +19,12 @@ function Star({ filled }) {
 
 export default function HotelsList() {
   const [hotels, setHotels] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const [filters, setFilters] = useState({
     minPrice: 0,
-    maxPrice: 300,
+    maxPrice: 300000,
     rating: 0,
     location: "",
     amenities: [],
@@ -32,13 +33,15 @@ export default function HotelsList() {
   useEffect(() => {
     async function fetchHotels() {
       try {
-        const response = await fetch("http://localhost:5000/api/hotels");
+        setLoading(true);
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/business/hotels`);
         if (!response.ok) throw new Error("Failed to fetch hotels");
         const data = await response.json();
         setHotels(data);
-        console.log("Hotels data:", data);
       } catch (err) {
         setError(err.message);
+      } finally {
+        setLoading(false);
       }
     }
     fetchHotels();
@@ -63,16 +66,14 @@ export default function HotelsList() {
   }
 
   const filteredHotels = hotels.filter((hotel) => {
-    if (hotel.price < filters.minPrice || hotel.price > filters.maxPrice) return false;
+    // Price filter
+    if (hotel.pricePerNight < filters.minPrice || hotel.pricePerNight > filters.maxPrice)
+      return false;
 
-    const reviewsCount = hotel.reviews?.length || 0;
-    const averageRating = reviewsCount
-      ? hotel.reviews.reduce((acc, r) => acc + r.rating, 0) / reviewsCount
-      : 0;
+    // Rating filter
+    if (filters.rating > 0 && hotel.averageRating < filters.rating) return false;
 
-    if (filters.rating > 0 && averageRating < filters.rating) return false;
-    if (filters.location && hotel.location !== filters.location) return false;
-
+    // Amenities filter
     if (
       filters.amenities.length > 0 &&
       !(hotel.amenities && filters.amenities.every((a) => hotel.amenities.includes(a)))
@@ -82,170 +83,149 @@ export default function HotelsList() {
     return true;
   });
 
-  if (error) return <p>Error: {error}</p>;
-  if (!hotels.length) return <p>Loading hotels...</p>;
+  if (loading) return (
+  <div className="loading-spinner">
+    <div className="spinner"></div>
+  </div>
+);
+  if (error) return <div className="error-message">Error: {error}</div>;
 
   return (
     <div className="hotel-page">
       <div
         className="hero"
         style={{
-          backgroundImage: `url(${
-            hotels[0]?.heroImage || "http://localhost:5000/uploads/hero.jpg"
-          })`,
+          backgroundImage: `url(${hotels[0]?.images?.[0] || "/uploads/hero.jpg"})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          height: "400px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "white",
-          position: "relative",
         }}
       >
-        <div className="hero-content">
-          <h1>Discover the Best Hotels in Douala</h1>
+        <div className="hero-overlay">
+          <h1>Discover the Best Hotels</h1>
           <p>Find your perfect stay with great prices and amazing amenities.</p>
         </div>
       </div>
 
       <main className="main-content">
         <aside className="filters" aria-label="Hotel filters">
-          <h2>Filters</h2>
-          <div className="filter-group">
-            <label>Price Range</label>
-            <div className="range-inputs">
-              <input
-                type="number"
-                name="minPrice"
-                value={filters.minPrice}
-                onChange={updateFilter}
-                placeholder="Min"
-                min={0}
-              />
-              <input
-                type="number"
-                name="maxPrice"
-                value={filters.maxPrice}
-                onChange={updateFilter}
-                placeholder="Max"
-                min={0}
-              />
-            </div>
-          </div>
+  <h2>Filters</h2>
+  <div className="filter-group">
+    <label>Price Range</label>
+    <div className="range-inputs">
+      <input
+        type="number"
+        name="minPrice"
+        value={filters.minPrice}
+        onChange={updateFilter}
+        placeholder="Min"
+        min={0}
+      />
+      <input
+        type="number"
+        name="maxPrice"
+        value={filters.maxPrice}
+        onChange={updateFilter}
+        placeholder="Max"
+        min={0}
+      />
+    </div>
+  </div>
 
-          <div className="filter-group">
-            <label htmlFor="rating-select">Minimum Rating</label>
-            <select
-              id="rating-select"
-              name="rating"
-              value={filters.rating}
-              onChange={updateFilter}
-            >
-              <option value={0}>Any</option>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <option key={star} value={star}>
-                  {star} star{star > 1 ? "s" : ""}
-                </option>
-              ))}
-            </select>
-          </div>
+  <div className="filter-group">
+    <label htmlFor="rating-select">Minimum Rating</label>
+    <select
+      id="rating-select"
+      name="rating"
+      value={filters.rating}
+      onChange={updateFilter}
+    >
+      <option value={0}>Any</option>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <option key={star} value={star}>
+          {star} star{star > 1 ? "s" : ""}
+        </option>
+      ))}
+    </select>
+  </div>
 
-          <div className="filter-group">
-            <label htmlFor="location-select">Location</label>
-            <select
-              id="location-select"
-              name="location"
-              value={filters.location}
-              onChange={updateFilter}
-            >
-              <option value="">Any</option>
-              <option value="Akwa">Akwa</option>
-              <option value="Bonanjo">Bonanjo</option>
-              <option value="Mountains">Mountains</option>
-            </select>
-          </div>
+  <div className="filter-group" aria-label="Amenities filter">
+    <label>Amenities</label>
+    <div className="checkboxes">
+      {["WiFi", "Pool", "Spa", "Breakfast", "Parking"].map((amenity) => (
+        <label key={amenity}>
+          <input
+            type="checkbox"
+            name="amenities"
+            value={amenity}
+            checked={filters.amenities.includes(amenity)}
+            onChange={updateFilter}
+          />
+          {amenity}
+        </label>
+      ))}
+    </div>
+  </div>
+</aside>
 
-          <div className="filter-group" aria-label="Amenities filter">
-            <label>Amenities</label>
-            <div className="checkboxes">
-              {["WiFi", "Pool", "Spa", "Shuttle", "Breakfast", "Parking"].map((amenity) => (
-                <label key={amenity}>
-                  <input
-                    type="checkbox"
-                    name="amenities"
-                    value={amenity}
-                    checked={filters.amenities.includes(amenity)}
-                    onChange={updateFilter}
-                  />
-                  {amenity}
-                </label>
-              ))}
-            </div>
-          </div>
-        </aside>
-
-        <section className="hotel-list" aria-live="polite">
+        <section className="hotel-list">
           {filteredHotels.length === 0 ? (
-            <p>No hotels found.</p>
+            <div className="no-results">
+              <h3>No hotels match your filters</h3>
+              <button onClick={() => setFilters({
+                minPrice: 0,
+                maxPrice: 300000,
+                rating: 0,
+                location: "",
+                amenities: [],
+              })}>
+                Clear all filters
+              </button>
+            </div>
           ) : (
-            filteredHotels.map((hotel) => {
-              const reviewsCount = hotel.reviews?.length || 0;
-              const averageRating = reviewsCount
-                ? hotel.reviews.reduce((sum, r) => sum + r.rating, 0) / reviewsCount
-                : 0;
-
-              return (
-                <article className="hotel-card" key={hotel._id || hotel.id}>
-                  <Link
-                    to={`/hotels/${hotel._id || hotel.id}`}
-                    className="hotel-link"
-                  >
-                    <img
-                      src={hotel.images?.[0] || hotel.image || ""}
-                      alt={hotel.name}
-                      loading="lazy"
-                    />
-                    <div className="info">
-                      <h3>{hotel.name}</h3>
-                      <div
-                        className="rating"
-                        aria-label={`${averageRating.toFixed(1)} star rating`}
-                      >
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <Star key={i} filled={i <= Math.round(averageRating)} />
-                        ))}
-                        <span>
-                          ({reviewsCount} review{reviewsCount !== 1 ? "s" : ""})
-                        </span>
-                      </div>
-                      <p>{hotel.description}</p>
-                      <div className="tags">
-                        {hotel.amenities?.length > 0 &&
-                          hotel.amenities.map((a) => <span key={a}>{a}</span>)}
-                      </div>
-                      <p className="price-category">
-                        <strong>Category:</strong> {hotel.priceCategory || "N/A"}
-                      </p>
-                      <div className="bottom-row">
-                        <strong>${hotel.price}/night</strong>
-                        <button
-                          className="book-btn"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            alert(`Booking hotel: ${hotel.name}`);
-                          }}
-                          aria-label={`Book ${hotel.name} now`}
-                        >
-                          Book Now
-                        </button>
-                      </div>
-                    </div>
-                  </Link>
-                </article>
-              );
-            })
+            filteredHotels.map((hotel) => (
+              // In your HotelsList component, update the hotel card section to:
+<article className="hotel-card" key={hotel._id}>
+  <Link to={`/hotels/${hotel._id}`} className="hotel-link">
+    <div className="hotel-image">
+      <img
+        src={hotel.images?.[0] || "/uploads/default-hotel.jpg"}
+        alt={hotel.name}
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = "/uploads/default-hotel.jpg";
+        }}
+      />
+      <div className="price-badge">
+        {hotel.pricePerNight?.toLocaleString()} FCFA/night
+      </div>
+    </div>
+    <div className="hotel-info">
+      <h3>{hotel.name}</h3>
+      <div className="rating">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Star key={i} filled={i <= Math.round(hotel.averageRating || 0)} />
+        ))}
+        <span>({hotel.reviewsCount || 0} reviews)</span>
+      </div>
+      <p className="location">
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+        </svg>
+        {hotel.location || "Unknown location"}
+      </p>
+      <p className="description">{hotel.description?.substring(0, 100)}...</p>
+      <div className="amenities-tags">
+        {hotel.amenities?.slice(0, 3).map((amenity) => (
+          <span key={amenity} className="amenity-tag">{amenity}</span>
+        ))}
+        {hotel.amenities?.length > 3 && (
+          <span className="amenity-tag">+{hotel.amenities.length - 3} more</span>
+        )}
+      </div>
+    </div>
+  </Link>
+</article>
+            ))
           )}
         </section>
       </main>

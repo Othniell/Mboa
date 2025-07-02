@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { FaStar, FaMapMarkerAlt } from "react-icons/fa";
+import { FaStar, FaMapMarkerAlt, FaRegStar, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { IoIosArrowBack } from "react-icons/io";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -70,10 +70,9 @@ const ActivityDetail = () => {
     imageFiles: [],
   });
 
-  // ✅ Fetch Activity (with avg. rating & count)
   const fetchActivity = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/activities/${id}`);
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/activities/${id}`);
       if (!res.ok) throw new Error("Failed to load activity");
       const data = await res.json();
       setActivity(data);
@@ -89,7 +88,7 @@ const ActivityDetail = () => {
   }, [id]);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/reviews/activity/${id}`)
+    fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reviews/activity/${id}`)
       .then((res) => res.json())
       .then(setReviews)
       .catch(console.error);
@@ -135,7 +134,7 @@ const ActivityDetail = () => {
       formData.append("activityId", id);
       form.imageFiles.forEach((file) => formData.append("images", file));
 
-      const res = await fetch("http://localhost:5000/api/reviews", {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/reviews`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -148,11 +147,9 @@ const ActivityDetail = () => {
       form.images.forEach((url) => URL.revokeObjectURL(url));
       setForm({ comment: "", stars: 0, hoveredStar: 0, images: [], imageFiles: [] });
       setShowReviewForm(false);
-
-      // ✅ Refetch activity to update avg rating
       await fetchActivity();
     } catch (err) {
-      alert("Failed to submit review. Please try again.");
+      alert("Failed to submit review. Please try again.", err);
     } finally {
       setSubmitting(false);
     }
@@ -170,178 +167,265 @@ const ActivityDetail = () => {
     );
   };
 
-  if (loading) return <p className="text-center py-10">Loading activity...</p>;
-  if (error) return <p className="text-center text-red-500 py-10">{error}</p>;
-  if (!activity) return <p>Activity not found.</p>;
+  if (loading) return (
+  <div className="loading-spinner">
+    <div className="spinner"></div>
+  </div>
+);
+  if (error) return <div className="error-container"><p>{error}</p></div>;
+  if (!activity) return <div className="not-found-container"><p>Activity not found.</p></div>;
 
   return (
-    <div className="activity-detail">
+    <div className="activity-detail-container">
       <button className="back-button" onClick={() => navigate(-1)}>
         <IoIosArrowBack /> Back to results
       </button>
 
-      <div className="overview">
-  <h1>{activity.name}</h1>
-
-  <div className="star-rating-display">
-    {[1, 2, 3, 4, 5].map((star) => {
-      let color = "#d1d5db"; // Default color for empty stars
-
-      if (star <= Math.floor(activity.averageRating)) {
-        // Full stars
-        color = "#facc15";
-      } else if (star <= Math.ceil(activity.averageRating) && activity.averageRating % 1 !== 0) {
-        // Half stars
-        color = "#facc15"; // For half, we'll color it in full yellow
-      }
-
-      return (
-        <FaStar
-          key={star}
-          size={18}
-          color={color}
-          style={star <= Math.floor(activity.averageRating) ? { color: "#facc15" } : {}}
-        />
-      );
-    })}
-    <span style={{ marginLeft: "8px" }}>
-      {activity.averageRating} ({activity.reviewCount} reviews)
-    </span>
-  </div>
-</div>
-
-
-      {/* image gallery */}
-      <div className="image-grid-container">
-        <div className="main-image-box">
-          <img
-            src={activity.images?.[currentImageIndex] || "https://via.placeholder.com/800x500?text=Activity"}
-            alt={`Main image ${currentImageIndex + 1}`}
-            className="main-image"
-          />
-          <button className="nav-button prev" onClick={prevImage}>‹</button>
-          <button className="nav-button next" onClick={nextImage}>›</button>
-        </div>
-        <div className="thumbnail-row">
-          {activity.images?.map((img, idx) => (
-            <div key={idx} className={`thumbnail-item ${idx === currentImageIndex ? "active" : ""}`} onClick={() => setCurrentImageIndex(idx)}>
-              <img src={img} alt={`Thumbnail ${idx + 1}`} />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="overview">
-        <div className="location">
-          <FaMapMarkerAlt /> {activity.location?.address || "Location not available"}
-        </div>
-        <p>{activity.description}</p>
-      </div>
-
-      {/* Reviews */}
-      <section className="review-section">
-        <h2>Reviews</h2>
-        <button onClick={() => setShowReviewForm(!showReviewForm)} className="write-review-button">
-          {showReviewForm ? "Cancel" : "Write a Review"}
-        </button>
-
-        {showReviewForm && (
-          <form className="review-form" onSubmit={handleSubmit}>
-            <textarea
-              placeholder="Share your experience..."
-              value={form.comment}
-              onChange={(e) => setForm({ ...form, comment: e.target.value })}
-              required
-            />
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImageChange}
-              className="image-upload-input"
-            />
-            <div className="star-rating-input">
+      <div className="activity-header">
+        <h1 className="activity-title">{activity.name}</h1>
+        
+        <div className="activity-meta">
+          <div className="rating-container">
+            <div className="star-rating">
               {[1, 2, 3, 4, 5].map((star) => (
-                <FaStar
-                  key={star}
-                  size={24}
-                  onClick={() => handleStarClick(star)}
-                  onMouseEnter={() => handleStarHover(star)}
-                  onMouseLeave={handleStarHoverOut}
-                  color={star <= (form.hoveredStar || form.stars) ? "#facc15" : "#d1d5db"}
-                  style={{ cursor: "pointer" }}
-                />
+                <span key={star}>
+                  {star <= activity.averageRating ? (
+                    <FaStar className="star-filled" />
+                  ) : (
+                    <FaRegStar className="star-empty" />
+                  )}
+                </span>
               ))}
             </div>
-            <button type="submit" disabled={submitting}>
-              {submitting ? "Submitting..." : "Submit Review"}
-            </button>
-          </form>
-        )}
+            <span className="rating-text">
+              {activity.averageRating.toFixed(1)} ({activity.reviewCount} reviews)
+            </span>
+          </div>
+          
+          <div className="location-info">
+            <FaMapMarkerAlt className="location-icon" />
+            <span>{activity.location?.address || "Location not available"}</span>
+          </div>
+        </div>
+      </div>
 
-        <div className="reviews-list">
-          {reviews.length === 0 && <p className="no-reviews">No reviews yet.</p>}
-          {reviews.map((r) => (
-            <div key={r._id} className="review-card">
-              <div className="review-stars">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <FaStar key={s} color={s <= r.rating ? "#facc15" : "#d1d5db"} />
-                ))}
+      {/* Image Gallery */}
+  {/* Image Gallery */}
+<div className="image-gallery">
+  <div className="main-image-container">
+    {activity.images?.length > 0 ? (
+      <img
+        src={activity.images[currentImageIndex]}
+        alt={`Main view of ${activity.name}`}
+        className="main-image"
+        onError={(e) => {
+          e.target.src = "https://via.placeholder.com/800x500?text=Activity+Image";
+        }}
+      />
+    ) : (
+      <div className="no-image-placeholder">
+        <span>No images available</span>
+      </div>
+    )}
+    
+    {activity.images?.length > 1 && (
+      <>
+        <button className="nav-button prev" onClick={prevImage} aria-label="Previous image">
+          <FaChevronLeft />
+        </button>
+        <button className="nav-button next" onClick={nextImage} aria-label="Next image">
+          <FaChevronRight />
+        </button>
+        
+        <div className="image-counter">
+          {currentImageIndex + 1} / {activity.images.length}
+        </div>
+      </>
+    )}
+  </div>
+  
+  {activity.images?.length > 1 && (
+    <div className="thumbnail-container">
+      {activity.images.map((img, idx) => (
+        <div
+          key={idx}
+          className={`thumbnail ${idx === currentImageIndex ? "active" : ""}`}
+          onClick={() => setCurrentImageIndex(idx)}
+          aria-label={`View image ${idx + 1}`}
+        >
+          <img 
+            src={img} 
+            alt={`Thumbnail ${idx + 1}`} 
+            onError={(e) => {
+              e.target.src = "https://via.placeholder.com/100x75?text=Thumbnail";
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  )}
+</div>
+
+      <div className="activity-content">
+        <section className="description-section">
+          <h2 className="section-title">About this activity</h2>
+          <p className="description-text">{activity.description}</p>
+        </section>
+
+        {/* Reviews Section */}
+        <section className="reviews-section">
+          <div className="section-header">
+            <h2 className="section-title">Customer Reviews</h2>
+            <button
+              onClick={() => setShowReviewForm(!showReviewForm)}
+              className="review-button"
+            >
+              {showReviewForm ? "Cancel" : "Write a Review"}
+            </button>
+          </div>
+
+          {showReviewForm && (
+            <form className="review-form" onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label htmlFor="comment">Your Review</label>
+                <textarea
+                  id="comment"
+                  placeholder="Share your experience..."
+                  value={form.comment}
+                  onChange={(e) => setForm({ ...form, comment: e.target.value })}
+                  required
+                />
               </div>
-              <p className="review-comment">{r.comment}</p>
-              {r.images?.length > 0 && (
-                <div className="review-images">
-                  {r.images.map((img, i) => (
-                    <img key={i} src={img} alt={`review-${i}`} className="review-image" />
+              
+              <div className="form-group">
+                <label>Rating</label>
+                <div className="star-rating-input">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <FaStar
+                      key={star}
+                      onClick={() => handleStarClick(star)}
+                      onMouseEnter={() => handleStarHover(star)}
+                      onMouseLeave={handleStarHoverOut}
+                      className={`star ${star <= (form.hoveredStar || form.stars) ? "active" : ""}`}
+                    />
                   ))}
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Map section */}
-      <section className="map-section">
-        <h2>Location Map</h2>
-        <MapContainer
-          center={[activity.latitude, activity.longitude]}
-          zoom={13}
-          scrollWheelZoom={false}
-          style={{ height: "400px", width: "100%" }}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap contributors"
-          />
-          <Marker position={[activity.latitude, activity.longitude]} icon={activityIcon}>
-            <Popup>
-              <div style={{ textAlign: "center" }}>
-                <strong>{activity.name}</strong>
-                {userPosition && (
-                  <button onClick={() => setShowRoute(!showRoute)} className="map-btn">
-                    {showRoute ? "Hide Itinerary" : "Show Itinerary"}
-                  </button>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="images">Upload Photos (Optional)</label>
+                <input
+                  type="file"
+                  id="images"
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="image-upload"
+                />
+                {form.images.length > 0 && (
+                  <div className="image-previews">
+                    {form.images.map((img, idx) => (
+                      <div key={idx} className="image-preview">
+                        <img src={img} alt={`Preview ${idx + 1}`} />
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
-            </Popup>
-          </Marker>
+              
+              <button type="submit" className="submit-button" disabled={submitting}>
+                {submitting ? "Submitting..." : "Submit Review"}
+              </button>
+            </form>
+          )}
 
-          {userPosition && (
-            <Marker
-              position={[userPosition.lat, userPosition.lng]}
-              draggable={true}
-              eventHandlers={{ dragend: handleUserMarkerDragEnd }}
+          <div className="reviews-list">
+            {reviews.length === 0 ? (
+              <p className="no-reviews">No reviews yet. Be the first to review!</p>
+            ) : (
+              reviews.map((review) => (
+                <div key={review._id} className="review-card">
+                  <div className="review-header">
+                    <div className="review-rating">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <FaStar
+                          key={star}
+                          className={star <= review.rating ? "filled" : "empty"}
+                        />
+                      ))}
+                    </div>
+                    <div className="review-date">
+                      {new Date(review.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  
+                  <p className="review-content">{review.comment}</p>
+                  
+                  {review.images?.length > 0 && (
+                    <div className="review-images">
+                      {review.images.map((img, idx) => (
+                        <div key={idx} className="review-image">
+                          <img src={img} alt={`Review ${idx + 1}`} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* Map Section */}
+        <section className="map-section">
+          <h2 className="section-title">Location</h2>
+          <div className="map-container">
+            <MapContainer
+              center={[activity.latitude, activity.longitude]}
+              zoom={13}
+              scrollWheelZoom={false}
+              style={{ height: "100%", width: "100%", borderRadius: "8px" }}
             >
-              <Popup>Your location (drag to update)</Popup>
-            </Marker>
-          )}
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
+              <Marker position={[activity.latitude, activity.longitude]} icon={activityIcon}>
+                <Popup>
+                  <div className="map-popup">
+                    <strong>{activity.name}</strong>
+                    {userPosition && (
+                      <button
+                        onClick={() => setShowRoute(!showRoute)}
+                        className="route-button"
+                      >
+                        {showRoute ? "Hide Route" : "Show Route"}
+                      </button>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
 
-          {userPosition && showRoute && (
-            <Routing userPosition={userPosition} destination={{ lat: activity.latitude, lng: activity.longitude }} />
-          )}
-        </MapContainer>
-      </section>
+              {userPosition && (
+                <Marker
+                  position={[userPosition.lat, userPosition.lng]}
+                  draggable={true}
+                  eventHandlers={{ dragend: handleUserMarkerDragEnd }}
+                >
+                  <Popup>Your location (drag to update)</Popup>
+                </Marker>
+              )}
+
+              {userPosition && showRoute && (
+                <Routing
+                  userPosition={userPosition}
+                  destination={{ lat: activity.latitude, lng: activity.longitude }}
+                />
+              )}
+            </MapContainer>
+          </div>
+        </section>
+      </div>
 
       <TripAdvert />
     </div>

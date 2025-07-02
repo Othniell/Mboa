@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, X } from "lucide-react";
 import "./Signup.css";
-import { Eye, EyeOff } from "lucide-react";
 
-const Signup = () => {
+const Signup = ({ onClose, isModal = false }) => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
@@ -19,37 +19,53 @@ const Signup = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/signup", form);
+      const res = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/api/auth/signup`, form);
       alert(res.data.message || "Signup successful!");
-      navigate("/login");
+      if (isModal && onClose) onClose();
+      else navigate("/login");
     } catch (error) {
-      const errMsg =
-        error.response?.data?.message || "Something went wrong. Please try again.";
+      const errMsg = error.response?.data?.message || "Something went wrong. Please try again.";
       alert(errMsg);
     }
   };
 
   return (
-    <div className="signup-container">
-      <div className="signup-form-section">
-        <h2>Sign Up</h2>
+    <div className={`signup-wrapper ${isModal ? "modal-mode" : ""}`}>
+      <div className="signup-card">
+        {isModal && (
+          <button className="close-btn" onClick={onClose}>
+            <X size={20} />
+          </button>
+        )}
+
+        <h2>Create Your Account</h2>
+        <p className="subtitle">Join us to get started</p>
+
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Role</label>
-            <select name="role" value={form.role} onChange={handleChange}>
-              <option value="visitor">Visitor</option>
-              <option value="business">Business Owner</option>
-            </select>
+            <label>I am a:</label>
+            <div className="role-toggle">
+              <button
+                type="button"
+                className={`role-btn ${form.role === "visitor" ? "active" : ""}`}
+                onClick={() => setForm({ ...form, role: "visitor" })}
+              >
+                Visitor
+              </button>
+              <button
+                type="button"
+                className={`role-btn ${form.role === "business" ? "active" : ""}`}
+                onClick={() => setForm({ ...form, role: "business" })}
+              >
+                Business Owner
+              </button>
+            </div>
           </div>
 
           <div className="form-group">
@@ -59,60 +75,66 @@ const Signup = () => {
               name="username"
               value={form.username}
               onChange={handleChange}
-              placeholder="Enter username"
+              placeholder="e.g., johndoe"
               required
             />
           </div>
 
-          <div className="form-group">
-            <label>First Name</label>
-            <input
-              type="text"
-              name="firstName"
-              value={form.firstName}
-              onChange={handleChange}
-              required
-            />
+          <div className="name-fields">
+            <div className="form-group">
+              <label>First Name</label>
+              <input
+                type="text"
+                name="firstName"
+                value={form.firstName}
+                onChange={handleChange}
+                placeholder="John"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Last Name</label>
+              <input
+                type="text"
+                name="lastName"
+                value={form.lastName}
+                onChange={handleChange}
+                placeholder="Doe"
+                required
+              />
+            </div>
           </div>
 
           <div className="form-group">
-            <label>Last Name</label>
-            <input
-              type="text"
-              name="lastName"
-              value={form.lastName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Email Address</label>
+            <label>Email</label>
             <input
               type="email"
               name="email"
               value={form.email}
               onChange={handleChange}
+              placeholder="you@example.com"
               required
             />
           </div>
 
-          <div className="form-group password-group">
+          <div className="form-group">
             <label>Password</label>
-            <div className="password-wrapper">
+            <div className="password-input">
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
                 value={form.password}
                 onChange={handleChange}
+                placeholder="••••••••"
                 required
               />
-              <span
-                className="toggle-password-icon"
-                onClick={() => setShowPassword((prev) => !prev)}
+              <button
+                type="button"
+                className="toggle-password"
+                onClick={() => setShowPassword(!showPassword)}
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </span>
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
@@ -124,23 +146,24 @@ const Signup = () => {
                 name="businessName"
                 value={form.businessName}
                 onChange={handleChange}
+                placeholder="Your Business LLC"
                 required
               />
             </div>
           )}
 
-          <button type="submit" className="signup-btn">
-            Create Account
+          <button type="submit" className="submit-btn">
+            Sign Up
           </button>
 
-          <div className="login-link">
+          <p className="login-redirect">
             Already have an account?{" "}
-            <span onClick={() => navigate("/login")}>Log in</span>
-          </div>
+            <span onClick={() => (isModal ? onClose() : navigate("/login"))}>
+              Log In
+            </span>
+          </p>
         </form>
       </div>
-
-      <div className="signup-image-section">{/* optional image */}</div>
     </div>
   );
 };
