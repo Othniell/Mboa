@@ -1,6 +1,7 @@
 const Hotel = require("../models/Hotel");
 const Review = require("../models/Review");
 
+// Backend example - HotelController.js
 exports.getAllHotels = async (req, res) => {
   try {
     const filter = {};
@@ -8,31 +9,30 @@ exports.getAllHotels = async (req, res) => {
       filter.priceCategory = req.query.priceCategory;
     }
 
-    const hotels = await Hotel.find(filter).lean();
-    const hotelIds = hotels.map(h => h._id);
+    // Fetch hotels and populate the reviews
+    const hotels = await Hotel.find(filter).populate('reviews').lean(); // Populate reviews
 
-    const allReviews = await Review.find({ hotel: { $in: hotelIds } });
-
-    const enrichedHotels = hotels.map(hotel => {
-      const reviews = allReviews.filter(r => r.hotel.toString() === hotel._id.toString());
-      const avgRating = reviews.length
-        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+    const enrichedHotels = hotels.map((hotel) => {
+      const reviews = hotel.reviews || [];
+      const reviewsCount = reviews.length;
+      const avgRating = reviewsCount
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviewsCount
         : 0;
 
       return {
         ...hotel,
-        reviews,
+        reviewsCount,
         averageRating: Number(avgRating.toFixed(1)),
-        reviewsCount: reviews.length
       };
     });
 
-    res.json(enrichedHotels);
+    res.json(enrichedHotels);  // Make sure the response includes averageRating and reviewsCount
   } catch (err) {
-    console.error("Failed to fetch enriched hotels:", err);
+    console.error("Failed to fetch hotels:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 exports.getHotelById = async (req, res) => {

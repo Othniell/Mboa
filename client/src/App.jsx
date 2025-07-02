@@ -9,12 +9,11 @@ import HotelDetail from './pages/HotelDetail';
 import ActivityPage from './pages/Activities';
 import ActivityDetail from './pages/ActivitiesDetail';
 import LoginForm from './pages/LoginForm';
-import TripPlanner from './pages/PlanTrip';
+import TripPlanner from './pages/PlanTrip';  // Corrected import
 import ProtectedRoute from './Components/ProtectedRoute';
 import BusinessDashboard from './pages/BusinessDashboard';
-import AdminDashboard from './pages/AdminBusinessReview'
-import AdminLogs from "./pages/AdminLogs";
-import TripMap from './Components/TripMap';
+import AdminDashboard from './pages/AdminBusinessReview';
+import AdminLogs from './pages/AdminLogs';
 
 
 function App() {
@@ -24,6 +23,7 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/PlanTrip" element={<TripPlanner />} />  {/* Corrected route */}
           <Route path="/restaurants" element={<RestaurantsList />} />
           <Route 
             path="/restaurants/:id" 
@@ -53,8 +53,7 @@ function App() {
           />
           <Route path="/login" element={<LoginForm />} />
           <Route path="/trip-planner" element={<TripPlanner />} />
-            
-             <Route
+          <Route
             path="/dashboard"
             element={
               <ProtectedRoute allowedRoles={["business"]}>
@@ -64,7 +63,6 @@ function App() {
           />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/logs" element={<AdminLogs />} />
-
         </Routes>
         <Footer />
       </Router>

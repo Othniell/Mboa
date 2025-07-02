@@ -35,7 +35,11 @@ export default function ActivityPage() {
     ? activities
     : activities.filter(a => a.category === selectedCategory);
 
-  if (loading) return <div>Loading activities...</div>;
+  if (loading) return (
+  <div className="loading-spinner">
+    <div className="spinner"></div>
+  </div>
+);
   if (error) return <div>Error: {error}</div>;
 
   return (

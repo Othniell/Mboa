@@ -1,36 +1,18 @@
 const express = require("express");
 const router = express.Router();
+const mongoose = require("mongoose");
 const Business = require("../models/Business");
-const Hotel = require("../models/Hotel"); // Assuming this is where you store manual entries.
-const upload = require("../config/multer");
-const authMiddleware = require("../middleware/auth");
+const Hotel = require("../models/Hotel"); // Import the Hotel model for admin-added hotels
+const { protect } = require("../middleware/authMiddleware");
 
 // 🟢 Create a new business
-router.post("/create", authMiddleware, upload.array("images", 5), async (req, res) => {
+router.post("/create", protect, async (req, res) => {
   try {
-    const {
-      name,
-      type,
-      description,
-      address,
-      lat,
-      lng,
-      pricePerNight,
-      contact,
-      email,
-      priceCategory,
-      cuisine,
-      price,
-      category,
-      policies,
-      amenities,
-    } = req.body;
+    const { name, type, description, address, lat, lng, pricePerNight, contact, email, priceCategory, cuisine, price, category, policies, amenities } = req.body;
 
     if (!name || !type || !lat || !lng || !email) {
       return res.status(400).json({ message: "Missing required fields" });
     }
-
-    const images = req.files?.map(file => file.path) || [];
 
     const businessData = {
       owner: req.user.id,
@@ -38,67 +20,116 @@ router.post("/create", authMiddleware, upload.array("images", 5), async (req, re
       type,
       email,
       description,
-      location: {
-        address: address || "",
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
-      },
-      images,
+      location: { address, lat: parseFloat(lat), lng: parseFloat(lng) },
       priceCategory,
-      status: "pending", // Default
+      status: "pending",
     };
 
+    // Handle fields based on business type
     if (type === "hotel") {
       businessData.contact = contact;
-      if (pricePerNight) businessData.pricePerNight = parseFloat(pricePerNight);
-      if (policies) businessData.policies = policies.split(",").map(p => p.trim());
-      if (amenities) businessData.amenities = amenities.split(",").map(a => a.trim());
-    }
-
-    if (type === "restaurant") {
-      if (cuisine) businessData.cuisine = cuisine;
-      if (price) businessData.price = parseFloat(price);
-    }
-
-    if (type === "activity") {
-      if (category) businessData.category = category;
+      businessData.pricePerNight = pricePerNight;
+      businessData.policies = policies.split(",").map(p => p.trim());
+      businessData.amenities = amenities.split(",").map(a => a.trim());
+    } else if (type === "restaurant") {
+      businessData.cuisine = cuisine;
+      businessData.price = price;
+    } else if (type === "activity") {
+      businessData.category = category;
     }
 
     const business = new Business(businessData);
     await business.save();
 
-    return res.status(201).json({ message: "Business submitted for approval", business });
+    res.status(201).json({ message: "Business submitted for approval", business });
   } catch (err) {
-    console.error("Business create error:", err);
-    return res.status(500).json({ message: "Server error", error: err.message });
-  }
-});
-
-// 🟢 GET all approved hotels from both Business and manual Hotel entries
-router.get("/hotels", async (req, res) => {
-  try {
-    // Fetching hotels from the Business collection (approved)
-    const businessHotels = await Business.find({
-      type: "hotel",
-      status: "approved",
-    });
-
-    // Fetching manually added hotels from the Hotel collection
-    const manualHotels = await Hotel.find({
-      status: "approved", // Assuming the status field is used to manage approval
-    });
-
-    // Combine the two results
-    const allHotels = [...businessHotels, ...manualHotels];
-
-    res.json(allHotels);
-  } catch (err) {
-    console.error("Failed to fetch hotels:", err);
+    console.error("Error creating business:", err);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
-// (Optional: Add similar routes for restaurants and activities if needed)
-// e.g. router.get("/restaurants", ...) or router.get("/activities", ...)
+// 🟢 Approve a business submission (admin only)
+router.post("/:id/approve", protect, async (req, res) => {
+  try {
+    const business = await Business.findById(req.params.id);
+    if (!business) return res.status(404).json({ message: "Business not found" });
+
+    business.status = "approved";
+    await business.save();
+
+    res.json({ message: "Business approved successfully", business });
+  } catch (err) {
+    console.error("Error approving business:", err);
+    res.status(500).json({ message: "Server error while approving business" });
+  }
+});
+
+// 🟢 Get hotel by ID (fetch from both Business and Hotel models)
+router.get("/hotels/:id", async (req, res) => {
+  const { id } = req.params;
+
+  // Check if the ID is a valid ObjectId
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: "Invalid hotel ID format" });
+  }
+
+  try {
+    // First check Business model for business-owner-created hotels
+    let hotel = await Business.findById(id);
+    if (hotel) {
+      return res.json(hotel);  // Return the hotel data if found in Business model
+    }
+
+    // If not found in Business model, check Hotel model for admin-created hotels
+    hotel = await Hotel.findById(id);
+    if (!hotel) return res.status(404).json({ message: "Hotel not found" });
+
+    res.json(hotel); // Send the hotel data from Hotel model
+  } catch (err) {
+    console.error("Error fetching hotel:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// 🟢 Get all approved hotels (fetch approved businesses and admin-added hotels)
+router.get("/hotels", async (req, res) => {
+  try {
+    // Fetch business-owner hotels
+    const businessHotels = await Business.find({ type: "hotel", status: "approved" });
+
+    // Fetch admin-added hotels
+    const adminHotels = await Hotel.find({ type: "hotel" });
+
+    // Combine both sets of hotels
+    const allHotels = [...businessHotels, ...adminHotels];
+
+    res.json(allHotels); // Send the combined hotels list
+  } catch (err) {
+    console.error("Error fetching hotels:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// 🟢 Get all approved restaurants
+router.get("/restaurants", async (req, res) => {
+  try {
+    const restaurants = await Business.find({ type: "restaurant", status: "approved" });
+    res.json(restaurants);
+  } catch (err) {
+    console.error("Error fetching restaurants:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+// 🟢 Get all approved activities
+router.get("/activities", async (req, res) => {
+  try {
+    const activities = await Business.find({ type: "activity", status: "approved" });
+    res.json(activities);
+  } catch (err) {
+    console.error("Error fetching activities:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
 
 module.exports = router;

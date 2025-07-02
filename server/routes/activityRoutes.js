@@ -75,6 +75,62 @@ router.get("/", async (req, res) => {
   }
 });
 
+// In activityRoutes.js - update the trending route
+router.get("/trending", async (req, res) => {
+  try {
+    console.log("Fetching trending activities..."); // Debug log
+    
+    const activities = await Activity.find({ 
+      isTrending: true,
+      status: "validated"
+    })
+    .limit(3)
+    .lean(); // Using lean() for better performance
+    
+    console.log("Found activities:", activities); // Debug log
+    
+    if (!activities.length) {
+      console.log("No trending activities found");
+      return res.status(200).json([]);
+    }
+
+    // Get reviews for all activities in one query
+    const activityIds = activities.map(a => a._id);
+    const reviews = await Review.find({ 
+      activity: { $in: activityIds } 
+    });
+
+    const results = activities.map(activity => {
+      const activityReviews = reviews.filter(r => 
+        r.activity.equals(activity._id)
+      );
+      const reviewCount = activityReviews.length;
+      const averageRating = reviewCount > 0 
+        ? activityReviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+        : 0;
+
+      return {
+        ...activity,
+        images: activity.images?.length ? activity.images : [
+          'https://via.placeholder.com/400x300?text=No+Image'
+        ],
+        averageRating: Number(averageRating.toFixed(1)),
+        reviewCount,
+        priceCategory: activity.priceCategory || 'Not specified'
+      };
+    });
+
+    console.log("Returning results:", results); // Debug log
+    res.json(results);
+    
+  } catch (err) {
+    console.error("Error in /trending:", err);
+    res.status(500).json({ 
+      error: "Server error",
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+});
 // ✅ Get one activity by ID with reviews and rating
 router.get("/:id", async (req, res) => {
   try {

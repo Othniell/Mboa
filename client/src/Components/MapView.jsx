@@ -64,7 +64,13 @@ export default function HotelMap() {
   useEffect(() => {
     fetch("http://localhost:5000/api/hotels")
       .then((res) => res.json())
-      .then((data) => setHotels(data))
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setHotels(data);  // Ensure data is an array before setting it
+        } else {
+          console.error("API returned invalid data:", data);
+        }
+      })
       .catch((err) => console.error(err));
   }, []);
 
@@ -76,16 +82,14 @@ export default function HotelMap() {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         />
-
-        {/* Show user location */}
         {userPosition && (
           <Marker position={[userPosition.lat, userPosition.lng]}>
             <Popup>Your Location</Popup>
           </Marker>
         )}
 
-        {/* Show hotel markers only if coordinates are valid */}
-        {hotels.map((hotel) => {
+        {/* Render hotel markers only if hotels is an array */}
+        {Array.isArray(hotels) && hotels.map((hotel) => {
           if (
             hotel.latitude == null ||
             hotel.longitude == null ||

@@ -144,7 +144,11 @@ const RestaurantDetail = () => {
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : null;
 
-  if (loading) return <p>Loading...</p>;
+  if (loading) return (
+  <div className="loading-spinner">
+    <div className="spinner"></div>
+  </div>
+);
   if (error) return <p>{error}</p>;
 
   return (

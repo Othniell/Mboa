@@ -4,7 +4,8 @@ import {
   TileLayer,
   Marker,
   Popup,
-  useMap
+  useMap,
+  Polyline
 } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -42,90 +43,140 @@ const userIcon = L.icon({
   shadowUrl: markerShadow,
 });
 
-// RoutingMachine with proper event listener cleanup and voice toggle
 function RoutingMachine({ userPosition, destinations, enableVoice }) {
   const map = useMap();
-  const lastVoicePosition = useRef(null);
+  const routingControlRef = useRef(null);
+  const routeLineRef = useRef(null);
+  const lastPositionRef = useRef(null);
+  const lastInstructionRef = useRef(null);
+  const initialRouteAnnounced = useRef(false);
 
-  // Haversine formula to compute distance in meters
-  function distance(lat1, lon1, lat2, lon2) {
-    const toRad = x => (x * Math.PI) / 180;
-    const R = 6371e3; // meters
-    const φ1 = toRad(lat1);
-    const φ2 = toRad(lat2);
-    const Δφ = toRad(lat2 - lat1);
-    const Δλ = toRad(lon2 - lon1);
+  // Calculate distance between two points in meters
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3; // Earth radius in meters
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
 
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) *
-      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
     return R * c;
-  }
+  };
+
+  const speak = (text) => {
+    if (!enableVoice) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  };
 
   useEffect(() => {
     if (!userPosition || destinations.length === 0) return;
 
-    if (enableVoice && lastVoicePosition.current) {
-      const dist = distance(
-        lastVoicePosition.current.lat,
-        lastVoicePosition.current.lng,
+    // Check if user has moved significantly (at least 5 meters)
+    if (lastPositionRef.current) {
+      const distMoved = calculateDistance(
+        lastPositionRef.current.lat,
+        lastPositionRef.current.lng,
         userPosition.lat,
         userPosition.lng
       );
-      if (dist < 5) return; // prevent repeated speech if user hasn't moved enough
+      if (distMoved < 5) return; // Skip update if movement is too small
     }
+    lastPositionRef.current = userPosition;
 
     const waypoints = [
       L.latLng(userPosition.lat, userPosition.lng),
       ...destinations.map(p => L.latLng(p.latitude || p.lat, p.longitude || p.lng)),
     ];
 
-    const control = L.Routing.control({
-      waypoints,
-      router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
-      routeWhileDragging: false,
-      show: false,
-      addWaypoints: false,
-      createMarker: () => null,
-      formatter: new L.Routing.Formatter({ language: 'en' }),
-    }).addTo(map);
-
-    const onRoutesFound = (e) => {
-      if (!enableVoice) return;  // safeguard
-
-      lastVoicePosition.current = userPosition;
-      window.speechSynthesis.cancel();
-
-      const instructions = e.routes[0].instructions || [];
-      instructions.forEach((step, index) => {
-        setTimeout(() => {
-          if (enableVoice) {
-            const utter = new SpeechSynthesisUtterance(step.text);
-            utter.lang = 'en-US';
-            window.speechSynthesis.speak(utter);
-          }
-        }, index * 4000);
-      });
-    };
-
-    if (enableVoice) {
-      control.on('routesfound', onRoutesFound);
-    } else {
-      window.speechSynthesis.cancel();
+    // Clear previous routing control if exists
+    if (routingControlRef.current) {
+      map.removeControl(routingControlRef.current);
     }
 
-    return () => {
-      if (enableVoice) {
-        control.off('routesfound', onRoutesFound);
+    const control = L.Routing.control({
+      waypoints,
+      router: L.Routing.osrmv1({
+        serviceUrl: 'https://router.project-osrm.org/route/v1'
+      }),
+      routeWhileDragging: true,
+      show: false,
+      addWaypoints: false,
+      draggableWaypoints: false,
+      fitSelectedRoutes: true,
+      createMarker: () => null,
+      formatter: new L.Routing.Formatter({ language: 'en' }),
+      lineOptions: {
+        styles: [{
+          color: '#1e3c72',
+          opacity: 0.8,
+          weight: 5
+        }],
+        extendToWaypoints: true,
+        missingRouteTolerance: 1
       }
-      map.removeControl(control);
+    }).addTo(map);
+
+    routingControlRef.current = control;
+
+    const handleRoutesFound = (e) => {
+      const routes = e.routes;
+      if (routes && routes.length > 0) {
+        routeLineRef.current = routes[0].coordinates;
+        
+        // Announce route summary when first calculated
+        if (enableVoice && !initialRouteAnnounced.current) {
+          const summary = routes[0].summary;
+          const totalDistance = (summary.totalDistance / 1000).toFixed(1);
+          const totalTime = Math.round(summary.totalTime / 60);
+          speak(`Route calculated. Total distance: ${totalDistance} kilometers. Estimated time: ${totalTime} minutes.`);
+          initialRouteAnnounced.current = true;
+        }
+
+        // Find the most relevant instruction
+        const nextInstruction = routes[0].instructions.find(instruction => {
+          const distanceToNext = calculateDistance(
+            userPosition.lat,
+            userPosition.lng,
+            instruction.intersections[0].location[1],
+            instruction.intersections[0].location[0]
+          );
+          return distanceToNext < 100;
+        });
+
+        if (enableVoice && nextInstruction && nextInstruction.text !== lastInstructionRef.current) {
+          speak(nextInstruction.text);
+          lastInstructionRef.current = nextInstruction.text;
+        }
+      }
+    };
+
+    control.on('routesfound', handleRoutesFound);
+
+    return () => {
+      control.off('routesfound', handleRoutesFound);
+      if (routingControlRef.current) {
+        map.removeControl(routingControlRef.current);
+      }
+      window.speechSynthesis.cancel();
+      initialRouteAnnounced.current = false;
     };
   }, [userPosition, destinations, enableVoice]);
 
-  return null;
+  return routeLineRef.current ? (
+    <Polyline 
+      positions={routeLineRef.current.map(coord => [coord.lat, coord.lng])}
+      color="#1e3c72"
+      weight={5}
+      opacity={0.8}
+    />
+  ) : null;
 }
 
 export default function TripMap({ places }) {
@@ -133,81 +184,111 @@ export default function TripMap({ places }) {
   const [showRoute, setShowRoute] = useState(false);
   const [voiceOn, setVoiceOn] = useState(false);
   const [remainingDestinations, setRemainingDestinations] = useState([]);
+  const positionWatchRef = useRef(null);
 
-  // Cancel speech immediately when voice is toggled off
+  // Watch user position with high accuracy
   useEffect(() => {
-    if (!voiceOn) {
-      window.speechSynthesis.cancel();
-    }
-  }, [voiceOn]);
-
-  // Initialize remaining destinations when route shown
-  useEffect(() => {
-    if (showRoute) {
-      const validPlaces = places.filter(p => p.latitude || p.lat);
-      setRemainingDestinations(validPlaces);
+    if ('geolocation' in navigator) {
+      positionWatchRef.current = navigator.geolocation.watchPosition(
+        (position) => {
+          setUserPosition({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error('Geolocation error:', error);
+          setUserPosition({ lat: 4.0511, lng: 9.7679 });
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 5000
+        }
+      );
     } else {
-      setRemainingDestinations([]);
+      setUserPosition({ lat: 4.0511, lng: 9.7679 });
     }
-  }, [places, showRoute]);
 
-  // Watch user location continuously
-  useEffect(() => {
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        setUserPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      },
-      (err) => console.error('Geolocation error', err),
-      { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
-    );
-    return () => navigator.geolocation.clearWatch(watchId);
+    return () => {
+      if (positionWatchRef.current) {
+        navigator.geolocation.clearWatch(positionWatchRef.current);
+      }
+      window.speechSynthesis.cancel();
+    };
   }, []);
 
-  // Remove destination once user is close enough (10m)
+  // Initialize remaining destinations when places change
+  useEffect(() => {
+    const validPlaces = places.filter(p => p.latitude || p.lat);
+    setRemainingDestinations(validPlaces);
+  }, [places]);
+
+  // Check if user reached any destination
   useEffect(() => {
     if (!userPosition || remainingDestinations.length === 0) return;
 
-    const toRad = x => (x * Math.PI) / 180;
-    const R = 6371e3; // meters
+    const checkArrival = () => {
+      const nextDestination = remainingDestinations[0];
+      const destLat = nextDestination.latitude || nextDestination.lat;
+      const destLng = nextDestination.longitude || nextDestination.lng;
 
-    function distance(lat1, lon1, lat2, lon2) {
-      const φ1 = toRad(lat1);
-      const φ2 = toRad(lat2);
-      const Δφ = toRad(lat2 - lat1);
-      const Δλ = toRad(lon2 - lon1);
+      const distance = calculateDistance(
+        userPosition.lat,
+        userPosition.lng,
+        destLat,
+        destLng
+      );
 
-      const a =
-        Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-        Math.cos(φ1) * Math.cos(φ2) *
-        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      if (distance < 20) {
+        setRemainingDestinations(prev => prev.slice(1));
+        
+        if (voiceOn) {
+          const utterance = new SpeechSynthesisUtterance(
+            `You have arrived at ${nextDestination.name}`
+          );
+          window.speechSynthesis.speak(utterance);
+        }
+      }
+    };
 
-      return R * c;
-    }
+    const arrivalCheckInterval = setInterval(checkArrival, 3000);
+    return () => clearInterval(arrivalCheckInterval);
+  }, [userPosition, remainingDestinations, voiceOn]);
 
-    const nextDest = remainingDestinations[0];
-    const distToNext = distance(
-      userPosition.lat,
-      userPosition.lng,
-      nextDest.latitude || nextDest.lat,
-      nextDest.longitude || nextDest.lng
-    );
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3;
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
 
-    const ARRIVAL_THRESHOLD = 10; // meters
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-    if (distToNext < ARRIVAL_THRESHOLD) {
-      setRemainingDestinations((dests) => dests.slice(1));
-    }
-  }, [userPosition, remainingDestinations]);
-
-  const validPlaces = places.filter(p => p.latitude || p.lat);
-  const defaultCenter = userPosition || [4.05, 9.7];
+    return R * c;
+  };
 
   const getCategory = (place) => {
     if (place.rooms) return 'hotel';
     if (place.category) return 'activity';
     return 'restaurant';
   };
+
+  const validPlaces = places.filter(p => p.latitude || p.lat);
+  const defaultCenter = userPosition || [4.05, 9.7];
+
+  // Speak when voice is enabled
+  useEffect(() => {
+    if (voiceOn && showRoute && userPosition && remainingDestinations.length > 0) {
+      const utterance = new SpeechSynthesisUtterance(
+        "Voice guidance activated. Follow the route directions."
+      );
+      window.speechSynthesis.speak(utterance);
+    }
+  }, [voiceOn, showRoute, userPosition, remainingDestinations]);
 
   return (
     <div className="trip-map-container">
@@ -220,7 +301,12 @@ export default function TripMap({ places }) {
             <input
               type="checkbox"
               checked={voiceOn}
-              onChange={(e) => setVoiceOn(e.target.checked)}
+              onChange={(e) => {
+                setVoiceOn(e.target.checked);
+                if (!e.target.checked) {
+                  window.speechSynthesis.cancel();
+                }
+              }}
               style={{ marginRight: '0.5rem' }}
             />
             Enable Voice Navigation
@@ -269,7 +355,11 @@ export default function TripMap({ places }) {
         })}
 
         {showRoute && userPosition && remainingDestinations.length > 0 && (
-          <RoutingMachine userPosition={userPosition} destinations={remainingDestinations} enableVoice={voiceOn} />
+          <RoutingMachine 
+            userPosition={userPosition} 
+            destinations={remainingDestinations} 
+            enableVoice={voiceOn} 
+          />
         )}
       </MapContainer>
     </div>

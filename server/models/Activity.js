@@ -17,6 +17,8 @@ images: { type: [String], default: [], required: true },
   latitude: { type: Number, required: true },
   longitude: { type: Number, required: true },
 
+   isTrending: { type: Boolean, default: false },  // New field for trending
+
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],

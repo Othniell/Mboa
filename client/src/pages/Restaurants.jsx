@@ -74,7 +74,11 @@ const RestaurantsList = () => {
   };
 
   // Loading and error handling
-  if (loading) return <p>Loading restaurants...</p>;
+if (loading) return (
+  <div className="loading-spinner">
+    <div className="spinner"></div>
+  </div>
+);
   if (error) return <p>Error: {error}</p>;
 
   // Unique price categories and cuisines for dropdowns

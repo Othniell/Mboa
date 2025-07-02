@@ -15,6 +15,7 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const tripRoutes = require("./routes/tripRoutes");
 const locationRoute = require('./routes/location');
 const businessRoute = require("./routes/businessRoute");
+const uploadRoutes = require("./routes/uploadRoutes");
 const adminRoute = require("./routes/adminRoute"); // Importing admin routes
 
 const app = express();
@@ -40,6 +41,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/trips", tripRoutes);
 app.use("/api/location", locationRoute);
 app.use("/api/business", businessRoute);
+app.use("/api/upload", uploadRoutes);
 app.use("/api/admin", adminRoute); // Make sure this route is correctly used
 
 // Static folders for uploads and images

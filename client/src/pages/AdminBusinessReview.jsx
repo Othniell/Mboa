@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { FiHome, FiCheck, FiX, FiImage, FiMapPin, FiInfo } from "react-icons/fi";
 import "./AdminBusinessReview.css";
 
 const AdminBusinessReview = () => {
@@ -79,34 +80,67 @@ const AdminBusinessReview = () => {
 
     return (
       <div key={item._id} className="submission-card">
-        <div className="submission-name">{item.name}</div>
-        <div className="submission-desc">{item.description}</div>
-        <div className="submission-location">{locationText}</div>
-        <div className="submission-images">
-          {item.images?.map((img, i) => (
-            <img
-              key={i}
-              src={`${import.meta.env.VITE_BACKEND_URL}/uploads/${img}`}
-              alt="Preview"
-              className="submission-image"
-            />
-          ))}
+        <div className="card-header">
+          <h3 className="submission-name">{item.name}</h3>
+          {showActions ? (
+            <span className="status-badge pending">Pending Review</span>
+          ) : (
+            <span className="status-badge validated">Approved</span>
+          )}
         </div>
+        
+        <div className="submission-desc">
+          <FiInfo className="icon" />
+          {item.description || "No description provided"}
+        </div>
+        
+        <div className="submission-location">
+          <FiMapPin className="icon" />
+          {locationText}
+        </div>
+        
+        {item.images?.length > 0 && (
+          <div className="submission-images">
+            <div className="images-header">
+              <FiImage className="icon" />
+              <span>Images ({item.images.length})</span>
+            </div>
+            <div className="image-grid">
+              {item.images.slice(0, 3).map((img, i) => (
+                <div className="image-container" key={i}>
+                  <img
+                    src={`${import.meta.env.VITE_BACKEND_URL}/uploads/${img}`}
+                    alt="Business preview"
+                    className="submission-image"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://via.placeholder.com/150";
+                    }}
+                  />
+                  {i === 2 && item.images.length > 3 && (
+                    <div className="image-overlay">+{item.images.length - 3}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
         {showActions && (
           <div className="submission-actions">
             <button
               onClick={() => handleAction(item._id, "approve")}
-              className="approve-btn"
+              className="action-btn approve-btn"
               disabled={processing}
             >
-              Approve
+              <FiCheck className="icon" /> Approve
             </button>
             <button
               onClick={() => handleAction(item._id, "reject")}
-              className="reject-btn"
+              className="action-btn reject-btn"
               disabled={processing}
             >
-              Reject
+              <FiX className="icon" /> Reject
             </button>
           </div>
         )}
@@ -115,51 +149,84 @@ const AdminBusinessReview = () => {
   };
 
   return (
-    <div className="admin-container">
-      <aside className="sidebar">
-        <h2>Categories</h2>
-        {["hotel", "restaurant", "activity"].map((type) => (
-          <button
-            key={type}
-            onClick={() => setFilteredType(type)}
-            className={filteredType === type ? "active" : ""}
-          >
-            {type.charAt(0).toUpperCase() + type.slice(1)}
-          </button>
-        ))}
-      </aside>
+    <div className="admin-dashboard">
+      {/* Sidebar Navigation */}
+      <nav className="admin-sidebar">
+        <div className="sidebar-header">
+          <FiHome className="logo-icon" />
+          <h2>Business Admin</h2>
+        </div>
+        
+        <div className="sidebar-section">
+          <h3>Categories</h3>
+          <div className="category-buttons">
+            {["hotel", "restaurant", "activity"].map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilteredType(type)}
+                className={`category-btn ${filteredType === type ? "active" : ""}`}
+              >
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </nav>
 
-      <div className="admin-content">
-        <h1 className="section-title">
-          {filteredType.charAt(0).toUpperCase() + filteredType.slice(1)} Submissions
-        </h1>
+      {/* Main Content */}
+      <main className="admin-main">
+        <header className="admin-header">
+          <h1>
+            {filteredType.charAt(0).toUpperCase() + filteredType.slice(1)} Management
+          </h1>
+        </header>
 
-        <section>
-          <h2 className="section-title">Pending</h2>
+        <section className="content-section">
+          <div className="section-header">
+            <h2>Pending Submissions</h2>
+            <span className="count-badge">{pending.length}</span>
+          </div>
+          
           {loading ? (
-            <div className="loading">Loading...</div>
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p>Loading submissions...</p>
+            </div>
           ) : pending.length === 0 ? (
-            <div className="empty">No pending submissions.</div>
+            <div className="empty-state">
+              <p>No pending {filteredType} submissions</p>
+            </div>
           ) : (
-            <div className="submission-grid">
+            <div className="card-grid">
               {pending.map((item) => renderSubmissionCard(item, true))}
             </div>
           )}
         </section>
 
-        <section>
-          <h2 className="section-title">Validated</h2>
+        <section className="content-section">
+          <div className="section-header">
+            <h2>Approved Businesses</h2>
+            <span className="count-badge">{validated.length}</span>
+          </div>
+          
           {validated.length === 0 ? (
-            <div className="empty">No validated businesses.</div>
+            <div className="empty-state">
+              <p>No approved {filteredType} businesses</p>
+            </div>
           ) : (
-            <div className="submission-grid">
+            <div className="card-grid">
               {validated.map((item) => renderSubmissionCard(item))}
             </div>
           )}
         </section>
-      </div>
+      </main>
 
-      <ToastContainer position="top-center" autoClose={3000} />
+      <ToastContainer 
+        position="top-center" 
+        autoClose={3000}
+        toastClassName="toast-message"
+        progressClassName="toast-progress"
+      />
     </div>
   );
 };

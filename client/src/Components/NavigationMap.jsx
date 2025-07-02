@@ -1,4 +1,3 @@
-// src/components/NavigationMap.jsx
 import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -38,7 +37,7 @@ function RoutingWithVoice({ userPosition, destination }) {
       map.removeControl(control);
       window.speechSynthesis.cancel();
     };
-  }, [userPosition, destination]);
+  }, [userPosition, destination, map]);
 
   return null;
 }
@@ -47,14 +46,22 @@ export default function NavigationMap({ destination }) {
   const [userPosition, setUserPosition] = useState(null);
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
+    const watchId = navigator.geolocation.watchPosition(
       (pos) => {
-        setUserPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setUserPosition({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
       },
       (err) => {
-        console.error("Location access denied:", err);
-      }
+        console.error('Location access denied:', err);
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
     );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
   }, []);
 
   return (
