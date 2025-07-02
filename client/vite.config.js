@@ -3,22 +3,41 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  server: {
-    // No proxy needed since we're not connecting to a backend
+  server:  {
     port: 3000,
-    host: true, // Makes the server accessible on your local network
+    host: true, // allows access over local network
   },
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    emptyOutDir: true
+    emptyOutDir: true,
+    chunkSizeWarningLimit: 1200, // raises limit from 500kB to avoid warning
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) return 'react-vendors';
+            if (id.includes('framer-motion')) return 'motion';
+            if (id.includes('react-icons')) return 'icons';
+            if (id.includes('leaflet')) return 'leaflet';
+          }
+
+          if (id.includes('/src/pages/')) return 'pages';
+          if (id.includes('/src/Components/')) return 'components';
+          if (id.includes('/src/context/')) return 'context';
+          if (id.includes('/src/utils/')) return 'utils';
+        }
+      }
+    }
   },
   resolve: {
-    alias: {
-      // Optional: Set up path aliases for your frontend-only project
+    alias:  {
       '@': '/src',
-      '@components': '/src/components',
-      '@assets': '/src/assets'
+      '@components': '/src/Components',
+      '@assets': '/src/assets',
+      '@pages': '/src/pages',
+      '@context': '/src/context',
+      '@utils': '/src/utils',
     }
   }
 });
