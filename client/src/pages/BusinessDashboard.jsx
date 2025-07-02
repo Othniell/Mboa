@@ -4,7 +4,8 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
 import { FiUpload, FiMapPin, FiInfo, FiHome, FiCoffee, FiActivity } from "react-icons/fi";
-import "./Businessdashboard.css";
+import "./BusinessDashboard.css";
+
 // Updated fields map without latitude and longitude inputs
 const fieldMap = {
   hotel: [
