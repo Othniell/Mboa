@@ -76,7 +76,8 @@ export default function ActivityPage() {
 
                 ) : (
                   <img
-                    src={`http://localhost:5000/uploads/${activity.image}`}  // Fallback to the main image if no images are in the array
+                    src={`${import.meta.env.VITE_BACKEND_URL}/uploads/${activity.image}`}
+  // Fallback to the main image if no images are in the array
                     alt={activity.name}
                     className="activity-img"
                   />

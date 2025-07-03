@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api/hotels'; // your backend endpoint
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/hotels`; // your backend endpoint
 
 export const fetchHotels = async () => {
   const res = await fetch(API_URL);
