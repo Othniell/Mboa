@@ -29,7 +29,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-// Custom category icons
 const iconMap = {
   hotel: L.icon({ iconUrl: hotelIconUrl, iconSize: [32, 32], iconAnchor: [16, 32] }),
   restaurant: L.icon({ iconUrl: restaurantIconUrl, iconSize: [32, 32], iconAnchor: [16, 32] }),
@@ -51,9 +50,8 @@ function RoutingMachine({ userPosition, destinations, enableVoice }) {
   const lastInstructionRef = useRef(null);
   const initialRouteAnnounced = useRef(false);
 
-  // Calculate distance between two points in meters
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Earth radius in meters
+    const R = 6371e3;
     const φ1 = lat1 * Math.PI/180;
     const φ2 = lat2 * Math.PI/180;
     const Δφ = (lat2-lat1) * Math.PI/180;
@@ -78,7 +76,6 @@ function RoutingMachine({ userPosition, destinations, enableVoice }) {
   useEffect(() => {
     if (!userPosition || destinations.length === 0) return;
 
-    // Check if user has moved significantly (at least 5 meters)
     if (lastPositionRef.current) {
       const distMoved = calculateDistance(
         lastPositionRef.current.lat,
@@ -86,7 +83,7 @@ function RoutingMachine({ userPosition, destinations, enableVoice }) {
         userPosition.lat,
         userPosition.lng
       );
-      if (distMoved < 5) return; // Skip update if movement is too small
+      if (distMoved < 5) return;
     }
     lastPositionRef.current = userPosition;
 
@@ -95,7 +92,6 @@ function RoutingMachine({ userPosition, destinations, enableVoice }) {
       ...destinations.map(p => L.latLng(p.latitude || p.lat, p.longitude || p.lng)),
     ];
 
-    // Clear previous routing control if exists
     if (routingControlRef.current) {
       map.removeControl(routingControlRef.current);
     }
@@ -129,8 +125,7 @@ function RoutingMachine({ userPosition, destinations, enableVoice }) {
       const routes = e.routes;
       if (routes && routes.length > 0) {
         routeLineRef.current = routes[0].coordinates;
-        
-        // Announce route summary when first calculated
+
         if (enableVoice && !initialRouteAnnounced.current) {
           const summary = routes[0].summary;
           const totalDistance = (summary.totalDistance / 1000).toFixed(1);
@@ -139,7 +134,6 @@ function RoutingMachine({ userPosition, destinations, enableVoice }) {
           initialRouteAnnounced.current = true;
         }
 
-        // Find the most relevant instruction
         const nextInstruction = routes[0].instructions.find(instruction => {
           const distanceToNext = calculateDistance(
             userPosition.lat,
@@ -179,14 +173,13 @@ function RoutingMachine({ userPosition, destinations, enableVoice }) {
   ) : null;
 }
 
-export default function TripMap({ places }) {
+export default function TripMapComponent({ places }) {
   const [userPosition, setUserPosition] = useState(null);
   const [showRoute, setShowRoute] = useState(false);
   const [voiceOn, setVoiceOn] = useState(false);
   const [remainingDestinations, setRemainingDestinations] = useState([]);
   const positionWatchRef = useRef(null);
 
-  // Watch user position with high accuracy
   useEffect(() => {
     if ('geolocation' in navigator) {
       positionWatchRef.current = navigator.geolocation.watchPosition(
@@ -218,13 +211,11 @@ export default function TripMap({ places }) {
     };
   }, []);
 
-  // Initialize remaining destinations when places change
   useEffect(() => {
     const validPlaces = places.filter(p => p.latitude || p.lat);
     setRemainingDestinations(validPlaces);
   }, [places]);
 
-  // Check if user reached any destination
   useEffect(() => {
     if (!userPosition || remainingDestinations.length === 0) return;
 
@@ -242,7 +233,7 @@ export default function TripMap({ places }) {
 
       if (distance < 20) {
         setRemainingDestinations(prev => prev.slice(1));
-        
+
         if (voiceOn) {
           const utterance = new SpeechSynthesisUtterance(
             `You have arrived at ${nextDestination.name}`
@@ -280,7 +271,6 @@ export default function TripMap({ places }) {
   const validPlaces = places.filter(p => p.latitude || p.lat);
   const defaultCenter = userPosition || [4.05, 9.7];
 
-  // Speak when voice is enabled
   useEffect(() => {
     if (voiceOn && showRoute && userPosition && remainingDestinations.length > 0) {
       const utterance = new SpeechSynthesisUtterance(
